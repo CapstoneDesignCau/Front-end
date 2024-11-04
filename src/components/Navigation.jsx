@@ -93,6 +93,7 @@ function Navigation() {
 
   const NavItems = () => (
     <>
+      <StyledLink to="/weekly-photo" className={location.pathname === "/weekly-photo" ? "active" : ""}>이주의 사진</StyledLink>
       <StyledLink to="/photo/feedback" className={location.pathname === "/photo/feedback" ? "active" : ""}>사진 피드백</StyledLink>
       <StyledLink to="/photo/upload" className={location.pathname === "/photo/upload" ? "active" : ""}>사진 업로드</StyledLink>
       <StyledLink to="/learning" className={location.pathname === "/learning" ? "active" : ""}>학습자료</StyledLink>
@@ -115,7 +116,7 @@ function Navigation() {
       <MobileMenuButton onClick={toggleMobileMenu} aria-label="모바일 메뉴 열기">
         <Menu />
       </MobileMenuButton>
-      <MobileMenu isopen={isMobileMenuOpen.toString()}>
+      <MobileMenu isOpen={isMobileMenuOpen}>
         <MobileMenuButton onClick={toggleMobileMenu} aria-label="모바일 메뉴 닫기">
           <X />
         </MobileMenuButton>
