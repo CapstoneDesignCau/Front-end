@@ -3,6 +3,24 @@ import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import { Menu, X } from "lucide-react";
 
+const MobileMenu = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== "isOpen"
+})`
+  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 250px;
+  background-color: #282c34;
+  padding: 1rem;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+
+  @media (min-width: 769px) {
+    display: none;
+  }
+`;
+
 const NavBar = styled.nav`
   display: flex;
   justify-content: space-between;
@@ -47,22 +65,6 @@ const MobileMenuButton = styled.button`
   }
 `;
 
-const MobileMenu = styled.div`
-  display: none;
-  position: fixed;
-  top: 0;
-  right: 0;
-  height: 100vh;
-  width: 250px;
-  background-color: #282c34;
-  padding: 1rem;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
-
-  @media (max-width: 768px) {
-    display: ${props => props.isOpen ? 'block' : 'none'};
-  }
-`;
-
 const MobileNavLinks = styled.div`
   display: flex;
   flex-direction: column;
@@ -93,6 +95,7 @@ function Navigation() {
 
   const NavItems = () => (
     <>
+      <StyledLink to="/weekly-photo" className={location.pathname === "/weekly-photo" ? "active" : ""}>이주의 사진</StyledLink>
       <StyledLink to="/photo/feedback" className={location.pathname === "/photo/feedback" ? "active" : ""}>사진 피드백</StyledLink>
       <StyledLink to="/photo/upload" className={location.pathname === "/photo/upload" ? "active" : ""}>사진 업로드</StyledLink>
       <StyledLink to="/learning" className={location.pathname === "/learning" ? "active" : ""}>학습자료</StyledLink>
@@ -115,7 +118,7 @@ function Navigation() {
       <MobileMenuButton onClick={toggleMobileMenu} aria-label="모바일 메뉴 열기">
         <Menu />
       </MobileMenuButton>
-      <MobileMenu isopen={isMobileMenuOpen.toString()}>
+      <MobileMenu isOpen={isMobileMenuOpen}>
         <MobileMenuButton onClick={toggleMobileMenu} aria-label="모바일 메뉴 닫기">
           <X />
         </MobileMenuButton>

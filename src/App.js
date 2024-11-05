@@ -14,6 +14,7 @@ import UserProfile from './components/UserProfile';
 import EditProfile from './components/EditProfile';
 import ChangePassword from './components/ChangePassword';
 import ErrorPage from './components/ErrorPage';
+import UserEvaluation from './components/UserEvaluation';
 import './App.css';
 
 
@@ -36,6 +37,7 @@ function App() {
         <Route path="/user/profile" element={<UserProfile />} />
         <Route path="/user/profile/edit" element={<EditProfile />} />
         <Route path="/user/password/change" element={<ChangePassword />} />
+        <Route path="/weekly-photo" element={<UserEvaluation />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </Router>
