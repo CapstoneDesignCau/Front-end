@@ -182,10 +182,10 @@ export default function Home() {
   };
 
   const slides = [
-    { image: 'slide1.jpg', caption: '전문가의 피드백으로 더 나은 포즈를 만들어보세요' },
-    { image: 'slide2.jpg', caption: '다양한 각도에서의 피드백으로 완벽한 사진을 찍어보세요' },
-    { image: 'slide3.jpg', caption: '인물 전신 사진의 구도와 포즈를 개선해보세요' },
-    { image: 'slide4.jpg', caption: '프로페셔널한 look을 위한 맞춤형 조언을 받아보세요' },
+    { image: '/slide1.jpg', caption: '전문가의 피드백으로 더 나은 포즈를 만들어보세요' },
+    { image: '/slide2.jpg', caption: '다양한 각도에서의 피드백으로 완벽한 사진을 찍어보세요' },
+    { image: '/slide3.jpg', caption: '인물 전신 사진의 구도와 포즈를 개선해보세요' },
+    { image: '/slide4.jpg', caption: '프로페셔널한 look을 위한 맞춤형 조언을 받아보세요' },
   ];
 
   const evaluationCriteria = [
