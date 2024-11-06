@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { set, useForm } from "react-hook-form";
 import styled from "styled-components";
-import { login } from "../api/userService";
+import { setRccToken } from "../api/axios";
+import { login, getUserRole, getProfileImageUrl } from "../api/userService";
 import { Eye, EyeOff } from "lucide-react";
+import useUserStore from "../store/userStorage";
 
 const LoginContainer = styled.div`
   max-width: 400px;
-  margin: 2rem auto;
+  margin: 10rem auto; // 로그인 박스의 전체적인 위치 조정 가능
   padding: 2rem;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -100,6 +102,15 @@ const SignUpLink = styled.p`
   text-align: center;
   margin-top: 1rem;
   font-size: 0.875rem;
+
+  a {
+    text-decoration: none;
+    color: #0070f3;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 `;
 
 const Login = () => {
@@ -114,6 +125,7 @@ const Login = () => {
   } = useForm();
   const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const { setAccessToken, setRole, setProfileImageUrl } = useUserStore();
 
   const onSubmit = async (data) => {
     const { email, password, rememberMe } = data;
@@ -121,7 +133,31 @@ const Login = () => {
     try {
       const response = await login({ email, password });
       if (response) {
-        console.log(response.data);
+        //console.log(response.data);
+        setRccToken(response.data.result.accessToken);
+        setAccessToken(response.data.result.accessToken);
+
+        // 유저 역할 조회
+        try {
+          const roleResponse = await getUserRole();
+          setRole(roleResponse.data.result);
+          //console.log("유저 역할 조회 API 실행", roleResponse.data.result);
+        } catch (error) {
+          console.log("role Api error", error);
+        }
+
+        // 프로필 이미지 URL 조회
+        try {
+          const imageResponse = await getProfileImageUrl();
+          setProfileImageUrl(imageResponse.data.result);
+          // console.log(
+          //   "프로필 이미지 URL 조회 API 실행",
+          //   imageResponse.data.result
+          // );
+        } catch (error) {
+          console.log("profileImageUrl Api error", error);
+        }
+
         if (rememberMe) {
           // Implement remember me functionality here
           localStorage.setItem("rememberMe", email);
