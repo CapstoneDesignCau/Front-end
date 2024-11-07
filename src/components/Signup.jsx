@@ -242,7 +242,7 @@ const SignUp = () => {
           if (isValid) {
             submitButtonRef.current.click();
           } else {
-            // Focus on the first field with an error
+            // 에러가 발생한 갖을 찾아서 해당 input에 focus
             const errorFields = [
               "email",
               "password",
@@ -445,7 +445,6 @@ const SignUp = () => {
             <option value="">성별 선택</option>
             <option value="MALE">남성</option>
             <option value="FEMALE">여성</option>
-            <option value="OTHER">기타</option>
           </Select>
         </InputGroup>
         {errors.gender && <ErrorMessage>{errors.gender.message}</ErrorMessage>}
