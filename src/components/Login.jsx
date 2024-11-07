@@ -159,7 +159,6 @@ const Login = () => {
         }
 
         if (rememberMe) {
-          // Implement remember me functionality here
           localStorage.setItem("rememberMe", email);
         } else {
           localStorage.removeItem("rememberMe");
