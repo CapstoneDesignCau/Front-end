@@ -167,15 +167,29 @@ export default function PhotoOfTheWeek() {
   const [statistics, setStatistics] = useState({});
 
   useEffect(() => {
-    const dummyPhotos = Array.from({ length: 16 }, (_, i) => ({
-      id: i + 1,
-      url: `/placeholder.svg?height=300&width=400&text=Photo+${i + 1}`
-    }));
+    const dummyPhotos = [
+      { id: 1, url: '/picture1.webp' },
+      { id: 2, url: '/picture2.jpeg' },
+      { id: 3, url: '/picture3.avif' },
+      { id: 4, url: '/picture4.avif' },
+      { id: 5, url: '/picture5.avif' },
+      { id: 6, url: '/picture6.avif' },
+      { id: 7, url: '/picture7.avif' },
+      { id: 8, url: '/picture8.avif' },
+      { id: 9, url: '/picture9.jpeg' },
+      { id: 10, url: '/picture10.jpeg' },
+      { id: 11, url: '/picture11.jpeg' },
+      { id: 12, url: '/picture12.avif' },
+      { id: 13, url: '/picture13.avif' },
+      { id: 14, url: '/picture14.avif' },
+      { id: 15, url: '/picture15.avif' },
+      { id: 16, url: '/picture16.avif' },
+    ];
     setPhotos(dummyPhotos);
 
     setDateRange({
-      start: '2024-03-01',
-      end: '2024-03-07'
+      start: '2024-11-04',
+      end: '2024-11-10'
     });
 
     // 예시 통계 데이터 (실제로는 API에서 가져와야 함)
