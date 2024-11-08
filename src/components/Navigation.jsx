@@ -1,12 +1,14 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import {removeRccAccess} from "../api/axios";
 import { Menu, X } from "lucide-react";
+import useUserStore from "../store/userStorage";
 
 const MobileMenu = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== "isOpen"
+  shouldForwardProp: (prop) => prop !== "isOpen",
 })`
-  display: ${({ isOpen }) => (isOpen ? 'block' : 'none')};
+  display: ${({ isOpen }) => (isOpen ? "block" : "none")};
   position: fixed;
   top: 0;
   right: 0;
@@ -85,50 +87,145 @@ const StyledLink = styled(Link)`
   }
 `;
 
+const StyledButton = styled.button`
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: #61dafb;
+  }
+`;
+
 function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation(); // 현재 위치 정보 가져오기
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { accessToken, profileImageUrl, clearUser } = useUserStore();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  const handleLogout = () => {
+    clearUser();
+    removeRccAccess();
+    navigate("/");
+  };
+
   const NavItems = () => (
     <>
-      <StyledLink to="/weekly-photo" className={location.pathname === "/weekly-photo" ? "active" : ""}>이주의 사진</StyledLink>
-      <StyledLink to="/photo/feedback" className={location.pathname === "/photo/feedback" ? "active" : ""}>사진 피드백</StyledLink>
-      <StyledLink to="/photo/upload" className={location.pathname === "/photo/upload" ? "active" : ""}>사진 업로드</StyledLink>
-      <StyledLink to="/learning" className={location.pathname === "/learning" ? "active" : ""}>학습자료</StyledLink>
-      <StyledLink to="/community" className={location.pathname === "/community" ? "active" : ""}>커뮤니티</StyledLink>
+      <StyledLink
+        to="/weekly-photo"
+        className={location.pathname === "/weekly-photo" ? "active" : ""}
+      >
+        이주의 사진
+      </StyledLink>
+      <StyledLink
+        to="/photo/feedback"
+        className={location.pathname === "/photo/feedback" ? "active" : ""}
+      >
+        사진 피드백
+      </StyledLink>
+      <StyledLink
+        to="/photo/upload"
+        className={location.pathname === "/photo/upload" ? "active" : ""}
+      >
+        사진 업로드
+      </StyledLink>
+      <StyledLink
+        to="/learning"
+        className={location.pathname === "/learning" ? "active" : ""}
+      >
+        학습자료
+      </StyledLink>
+      <StyledLink
+        to="/community"
+        className={location.pathname === "/community" ? "active" : ""}
+      >
+        커뮤니티
+      </StyledLink>
     </>
   );
 
   return (
     <NavBar>
       <Logo>
-        <StyledLink to="/" className={location.pathname === "/" ? "active" : ""}>Char 칵</StyledLink>
+        <StyledLink
+          to="/"
+          className={location.pathname === "/" ? "active" : ""}
+        >
+          Char 칵
+        </StyledLink>
       </Logo>
       <NavLinks>
         <NavItems />
-        <StyledLink to="/user/profile" className={location.pathname === "/user/profile" ? "active" : ""}>
-          <ProfileImage src="/default_1.jpg" alt="User Profile" />
-        </StyledLink>
-        <StyledLink to="/login" className={location.pathname === "/login" ? "active" : ""}>로그아웃</StyledLink>
+        {accessToken ? (
+          <>
+            <StyledLink
+              to="/user/profile"
+              className={location.pathname === "/user/profile" ? "active" : ""}
+            >
+              <ProfileImage
+                src={profileImageUrl || "/default_1.jpg"}
+                alt="User Profile"
+              />
+            </StyledLink>
+            <StyledButton onClick={handleLogout}>로그아웃</StyledButton>
+          </>
+        ) : (
+          <StyledLink
+            to="/login"
+            className={location.pathname === "/login" ? "active" : ""}
+          >
+            로그인
+          </StyledLink>
+        )}
       </NavLinks>
-      <MobileMenuButton onClick={toggleMobileMenu} aria-label="모바일 메뉴 열기">
+      <MobileMenuButton
+        onClick={toggleMobileMenu}
+        aria-label="모바일 메뉴 열기"
+      >
         <Menu />
       </MobileMenuButton>
       <MobileMenu isOpen={isMobileMenuOpen}>
-        <MobileMenuButton onClick={toggleMobileMenu} aria-label="모바일 메뉴 닫기">
+        <MobileMenuButton
+          onClick={toggleMobileMenu}
+          aria-label="모바일 메뉴 닫기"
+        >
           <X />
         </MobileMenuButton>
         <MobileNavLinks>
           <NavItems />
-          <StyledLink to="/user/profile" className={location.pathname === "/user/profile" ? "active" : ""}>
-            <ProfileImage src="/default_1.jpg" alt="User Profile" />
-            프로필
-          </StyledLink>
-          <StyledLink to="/login" className={location.pathname === "/login" ? "active" : ""}>로그인/로그아웃</StyledLink>
+          {accessToken ? (
+            <>
+              <StyledLink
+                to="/user/profile"
+                className={
+                  location.pathname === "/user/profile" ? "active" : ""
+                }
+              >
+                <ProfileImage
+                  src={profileImageUrl || "/default_1.jpg"}
+                  alt="User Profile"
+                />
+                프로필
+              </StyledLink>
+              <StyledButton onClick={handleLogout}>로그아웃</StyledButton>
+            </>
+          ) : (
+            <StyledLink
+              to="/login"
+              className={location.pathname === "/login" ? "active" : ""}
+            >
+              로그인
+            </StyledLink>
+          )}
         </MobileNavLinks>
       </MobileMenu>
     </NavBar>
