@@ -1,5 +1,6 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
+import { useNavigate } from "react-router-dom";
 
 const sway = keyframes`
   0%, 100% { transform: rotate(-1deg) translateY(0); }
@@ -9,46 +10,41 @@ const sway = keyframes`
 const Container = styled.div`
   min-height: 100vh;
   background-color: #f0f0f0;
-  padding: 4rem 2rem;
-  overflow-x: hidden;
+  padding: 2rem 1rem;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+`;
+
+const BackgroundDecoration = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(216, 241, 230, 0.46) 0%, rgba(216, 241, 230, 0.46) 50.8%, rgba(255,255,255, 0) 50.8%, rgba(255,255,255, 0) 100%),
+    radial-gradient(circle at 90% 80%, rgba(255, 229, 168, 0.38) 0%, rgba(255, 229, 168, 0.38) 50.8%, rgba(255,255,255, 0) 50.8%, rgba(255,255,255, 0) 100%);
+  z-index: 0;
 `;
 
 const GalleryContainer = styled.div`
   position: relative;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20rem;
+  gap: 6rem;
+  z-index: 1;
 `;
 
-const StringLine = styled.div`
-  width: 100%;
-  height: 3px;
-  position: relative;
+const PolaroidRow = styled.div`
   display: flex;
   justify-content: space-between;
+  width: 100%;
   padding: 0 2rem;
-  animation: ${sway} 8s ease-in-out infinite;
-  z-index: 1; /* 낮은 z-index */
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #4a90e2;
-    clip-path: path('M0,20 Q25,-30 50,20 Q75,70 100,20');
-    z-index: -1; /* 선이 이미지 뒤에 오도록 */
-  }
-
-  &:nth-child(1) {
-    animation-delay: -4s;
-    transform: scaleY(-1);
-    margin-bottom: 2rem;
-  }
 `;
 
 const PolaroidWrapper = styled.div`
@@ -56,64 +52,26 @@ const PolaroidWrapper = styled.div`
   transform-origin: top center;
   animation: ${sway} 8s ease-in-out infinite;
   animation-delay: ${props => props.delay}s;
-  z-index: 2; /* 이미지가 선 위에 오도록 */
+  margin: 0 1rem;
   
   &:nth-child(1) { margin-top: -20px; }
   &:nth-child(2) { margin-top: 30px; }
-  &:nth-child(3) { margin-top: 30px; }
-  &:nth-child(4) { 
-    margin-top: 80px;
-    margin-right: -30px;
-  }
-`;
-
-const Clip = styled.div`
-  width: 24px;
-  height: 50px;
-  position: relative;
-  margin-bottom: -25px;
-  z-index: 3; /* 클립이 이미지 위에 오도록 */
-  margin-top: -25px;
-
-  ${PolaroidWrapper}:nth-child(4) & {
-    transform: translateX(20px);
-  }
-
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    width: 16px;
-    background: linear-gradient(145deg, #f0f0f0, #e6e6e6);
-    border: 2px solid #888;
-    transform: translateX(-50%);
-  }
-
-  &::before {
-    top: 0;
-    height: 30px;
-    border-radius: 16px 16px 0 0;
-    box-shadow: inset 1px 1px 2px rgba(255,255,255,0.5);
-  }
-
-  &::after {
-    bottom: 0;
-    height: 25px;
-    border-radius: 0 0 16px 16px;
-    box-shadow: inset -1px -1px 2px rgba(0,0,0,0.1);
-  }
+  &:nth-child(3) { margin-top: 10px; }
+  &:nth-child(4) { margin-top: 50px; }
 `;
 
 const Polaroid = styled.div`
+  display: block;
   background: white;
   padding: 12px 12px 35px 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  width: 200px;
+  width: 220px;
   transform: rotate(${props => props.rotation}deg);
   transition: transform 0.3s ease-in-out;
   position: relative;
   top: -20px;
-  z-index: 2; /* 이미지가 선 위에 오도록 */
+  border: none;
+  cursor: pointer;
 
   &:hover {
     transform: rotate(${props => props.rotation}deg) scale(1.05);
@@ -122,13 +80,14 @@ const Polaroid = styled.div`
 
   img {
     width: 100%;
-    height: 180px;
+    height: 200px;
     object-fit: cover;
     background: #f8f8f8;
   }
 `;
 
 const PolaroidGallery = () => {
+  const navigate = useNavigate();
   const images = [
     "/slide1.jpg",
     "/slide2.jpg",
@@ -141,20 +100,24 @@ const PolaroidGallery = () => {
   ];
 
   const getRotation = (index) => {
-    const rotations = [-12, -4, 4, 12];
+    const rotations = [-8, -3, 3, 8];
     return rotations[index % 4];
   };
 
   const getYOffset = (index) => {
-    if (index % 4 === 0) return -20;
-    if (index % 4 === 3) return 80;
-    return 30;
+    const offsets = [-20, 30, 10, 50];
+    return offsets[index % 4];
+  };
+
+  const handlePolaroidClick = (index) => {
+    navigate(`/learning/${index + 1}`);
   };
 
   return (
     <Container>
+      <BackgroundDecoration />
       <GalleryContainer>
-        <StringLine>
+        <PolaroidRow>
           {images.slice(0, 4).map((src, index) => (
             <PolaroidWrapper
               key={index}
@@ -163,14 +126,16 @@ const PolaroidGallery = () => {
                 marginTop: `${getYOffset(index)}px`
               }}
             >
-              <Clip />
-              <Polaroid rotation={getRotation(index)}>
+              <Polaroid 
+                rotation={getRotation(index)} 
+                onClick={() => handlePolaroidClick(index)}
+              >
                 <img src={src} alt={`Polaroid ${index + 1}`} />
               </Polaroid>
             </PolaroidWrapper>
           ))}
-        </StringLine>
-        <StringLine>
+        </PolaroidRow>
+        <PolaroidRow>
           {images.slice(4).map((src, index) => (
             <PolaroidWrapper
               key={index + 4}
@@ -179,13 +144,15 @@ const PolaroidGallery = () => {
                 marginTop: `${getYOffset(index)}px`
               }}
             >
-              <Clip />
-              <Polaroid rotation={getRotation(index)}>
+              <Polaroid 
+                rotation={getRotation(index)} 
+                onClick={() => handlePolaroidClick(index + 4)}
+              >
                 <img src={src} alt={`Polaroid ${index + 5}`} />
               </Polaroid>
             </PolaroidWrapper>
           ))}
-        </StringLine>
+        </PolaroidRow>
       </GalleryContainer>
     </Container>
   );

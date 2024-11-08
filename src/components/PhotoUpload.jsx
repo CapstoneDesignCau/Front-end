@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
-import { Upload, X, Image as ImageIcon, List, Grid, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, Grid } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const UploadContainer = styled.div`
   max-width: 1200px;
@@ -166,66 +167,6 @@ const Button = styled.button`
   }
 `;
 
-const GridView = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  padding: 20px;
-  background-color: #000;
-  border-radius: 8px;
-  position: relative;
-
-  &::before, &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 15px;
-    background-image: 
-      linear-gradient(
-        to right,
-        #fff 0px,
-        #fff 12px,
-        transparent 12px,
-        transparent 25px
-      );
-    background-size: 25px 100%;
-    background-repeat: repeat-x;
-    z-index: 1;
-  }
-
-  &::before {
-    top: 0;
-  }
-
-  &::after {
-    bottom: 0;
-  }
-`;
-
-const GridItem = styled(PhotoFrame)`
-  margin: 0;
-  width: 100%;
-  height: 0;
-  padding-bottom: 75%; 
-`;
-
-const PaginationContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 1rem;
-`;
-
-const PageButton = styled(Button)`
-  padding: 0.25rem 0.5rem;
-`;
-
-const PageInfo = styled.span`
-  margin: 0 1rem;
-  font-family: 'Courier New', Courier, monospace;
-`;
-
 const HiddenInput = styled.input`
   display: none;
 `;
@@ -279,13 +220,9 @@ export default function PhotoUpload() {
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
   const [recentPhotos, setRecentPhotos] = useState([]);
   const [newPhotos, setNewPhotos] = useState([]);
-  const [showAllPhotos, setShowAllPhotos] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const fileInputRef = useRef(null);
-
-  const photosPerPage = 9;
-  const totalPages = Math.ceil(uploadedPhotos.length / photosPerPage);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const dummyPhotos = Array.from({ length: 20 }, (_, i) => ({
@@ -315,24 +252,6 @@ export default function PhotoUpload() {
     setNewPhotos(prevPhotos => prevPhotos.filter((_, i) => i !== index));
   };
 
-  const removeUploadedPhoto = (index) => {
-    setUploadedPhotos(prevPhotos => {
-      const updatedPhotos = [...prevPhotos];
-      updatedPhotos.splice(index, 1);
-      return updatedPhotos;
-    });
-    setRecentPhotos(prevPhotos => {
-      const updatedPhotos = [...prevPhotos];
-      if (index < updatedPhotos.length) {
-        updatedPhotos.splice(index, 1);
-        if (uploadedPhotos.length > 5) {
-          updatedPhotos.push(uploadedPhotos[5]);
-        }
-      }
-      return updatedPhotos;
-    });
-  };
-
   const handleUploadClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
@@ -346,8 +265,7 @@ export default function PhotoUpload() {
   };
 
   const handleViewAllPhotos = () => {
-    setShowAllPhotos(!showAllPhotos);
-    setCurrentPage(1);
+    navigate('/photo/my');
   };
 
   const formatDate = (date) => {
@@ -358,7 +276,7 @@ export default function PhotoUpload() {
     }).replace(/\//g, '.');
   };
 
-  const renderPhoto = (photo, index, removeFunction) => (
+  const renderPhoto = (photo, index, isNewUpload = false) => (
     <PhotoFrame key={index} style={index === 1 ? { margin: '0 1rem' } : {}}>
       <Photo 
         src={URL.createObjectURL(photo.file)} 
@@ -366,18 +284,15 @@ export default function PhotoUpload() {
         onClick={() => setSelectedPhoto(photo)}
       />
       <DateLabel>{formatDate(photo.uploadDate)}</DateLabel>
-      <RemoveButton onClick={(e) => {
-        e.stopPropagation();
-        removeFunction(index);
-      }}>
-        <X size={16} />
-      </RemoveButton>
+      {isNewUpload && (
+        <RemoveButton onClick={(e) => {
+          e.stopPropagation();
+          removeNewPhoto(index);
+        }}>
+          <X size={16} />
+        </RemoveButton>
+      )}
     </PhotoFrame>
-  );
-
-  const paginatedPhotos = uploadedPhotos.slice(
-    (currentPage - 1) * photosPerPage,
-    currentPage * photosPerPage
   );
 
   return (
@@ -386,43 +301,15 @@ export default function PhotoUpload() {
       
       <Section>
         <SectionTitle>
-          RECENT UPLOADS
+          TODAY UPLOADS
           <Button onClick={handleViewAllPhotos}>
-            {showAllPhotos ? <List size={16} /> : <Grid size={16} />}
-            {showAllPhotos ? 'HIDE' : 'VIEW ALL'}
+            <Grid size={16} />
+            VIEW ALL
           </Button>
         </SectionTitle>
-        {showAllPhotos ? (
-          <>
-            <GridView>
-              {paginatedPhotos.map((photo, index) => (
-                <GridItem key={index} onClick={() => setSelectedPhoto(photo)}>
-                  <Photo src={URL.createObjectURL(photo.file)} alt={`Photo ${index}`} />
-                  <DateLabel>{formatDate(photo.uploadDate)}</DateLabel>
-                  <RemoveButton onClick={(e) => {
-                    e.stopPropagation();
-                    removeUploadedPhoto(index + (currentPage - 1) * photosPerPage);
-                  }}>
-                    <X size={16} />
-                  </RemoveButton>
-                </GridItem>
-              ))}
-            </GridView>
-            <PaginationContainer>
-              <PageButton onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
-                <ChevronLeft size={16} />
-              </PageButton>
-              <PageInfo>{currentPage} / {totalPages}</PageInfo>
-              <PageButton onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
-                <ChevronRight size={16} />
-              </PageButton>
-            </PaginationContainer>
-          </>
-        ) : (
-          <FilmStrip>
-            {recentPhotos.map((photo, index) => renderPhoto(photo, index, removeUploadedPhoto))}
-          </FilmStrip>
-        )}
+        <FilmStrip>
+          {recentPhotos.map((photo, index) => renderPhoto(photo, index))}
+        </FilmStrip>
       </Section>
 
       <Section>
@@ -440,7 +327,7 @@ export default function PhotoUpload() {
         />
         {newPhotos.length > 0 && (
           <FilmStrip>
-            {newPhotos.map((photo, index) => renderPhoto(photo, index, removeNewPhoto))}
+            {newPhotos.map((photo, index) => renderPhoto(photo, index, true))}
           </FilmStrip>
         )}
         {newPhotos.length > 0 && (

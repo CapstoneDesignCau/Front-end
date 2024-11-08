@@ -15,6 +15,10 @@ import EditProfile from './components/EditProfile';
 import ChangePassword from './components/ChangePassword';
 import ErrorPage from './components/ErrorPage';
 import UserEvaluation from './components/UserEvaluation';
+import LearningMaterial from './components/LearningMaterial';
+import MyPhotos from './components/MyPhotos';
+import AdminUserEvaluation from './components/AdminUserEvaluation';
+import AdminLearningMaterial from './components/AdminLearningMaterial';
 import './App.css';
 
 
@@ -30,7 +34,7 @@ function App() {
         <Route path="/photo/upload" element={<PhotoUpload />} />
         <Route path="/photo/feedback" element={<PhotoFeedback />} />
         <Route path="/learning" element={<Learning />} />
-        <Route path="/learning/:learningId" element={<Learning />} />
+        <Route path="/learning/:learningId" element={<LearningMaterial />} />
         <Route path="/community" element={<CommunityList />} />
         <Route path="/community/search" element={<CommunityList />} />
         <Route path="/community/:postId" element={<CommunityPost />} />
@@ -38,6 +42,9 @@ function App() {
         <Route path="/user/profile/edit" element={<EditProfile />} />
         <Route path="/user/password/change" element={<ChangePassword />} />
         <Route path="/weekly-photo" element={<UserEvaluation />} />
+        <Route path="/photo/my" element={<MyPhotos />} />
+        <Route path="/admin/weekly-photo" element={<AdminUserEvaluation />} />
+        <Route path="/admin/learning" element={<AdminLearningMaterial />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </Router>
