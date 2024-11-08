@@ -237,10 +237,10 @@ export default function CommunityList() {
             <tr>
               <Th style={{ width: "5%" }}>글 번호</Th>
               <Th style={{ width: "55%" }}>제목</Th>
-              <Th style={{ width: "10%" }}>작성자</Th>
+              <Th style={{ width: "18%" }}>작성자</Th>
               <Th style={{ width: "10%" }}>작성일</Th>
-              <Th style={{ width: "10%", textAlign: "center" }}>댓글</Th>
-              <Th style={{ width: "10%", textAlign: "center" }}>좋아요</Th>
+              <Th style={{ width: "6%", textAlign: "center" }}>댓글</Th>
+              <Th style={{ width: "6%", textAlign: "center" }}>좋아요</Th>
             </tr>
           </thead>
           <tbody>
