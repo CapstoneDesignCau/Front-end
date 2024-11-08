@@ -51,7 +51,7 @@ const Checkbox = styled.input`
 const SubmitButton = styled.button`
   width: 100%;
   padding: 10px;
-  background-color: #4caf50;
+  background-color: #0070f3;
   color: white;
   border: none;
   border-radius: 4px;
@@ -60,7 +60,7 @@ const SubmitButton = styled.button`
   transition: background-color 0.3s;
 
   &:hover {
-    background-color: #45a049;
+    background-color: #0051cc;
   }
 
   &:disabled {
