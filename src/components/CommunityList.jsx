@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Search, Paperclip } from "lucide-react";
 
@@ -42,6 +43,7 @@ const Td = styled.td`
 const Tr = styled.tr`
   &:hover {
     background-color: #f7fafc;
+    cursor: pointer;
   }
 `;
 
@@ -216,6 +218,7 @@ const initialPosts = [
 export default function CommunityList() {
   const [posts, setPosts] = useState(initialPosts);
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const sortedPosts = [...posts].sort((a, b) => b.likes - a.likes);
   const recommendedPosts = sortedPosts.slice(0, 3);
@@ -227,6 +230,10 @@ export default function CommunityList() {
       post.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setPosts(filteredPosts);
+  };
+
+  const handlePostClick = (postId) => {
+    navigate(`/community/${postId}`);
   };
 
   return (
@@ -245,7 +252,10 @@ export default function CommunityList() {
           </thead>
           <tbody>
             {recommendedPosts.map((post) => (
-              <RecommendedTr key={post.id}>
+              <RecommendedTr
+                key={post.id}
+                onClick={() => handlePostClick(post.id)}
+              >
                 <Td>
                   <RecommendedBadge>⭐️ 추천 ⭐️</RecommendedBadge>
                 </Td>
@@ -268,7 +278,7 @@ export default function CommunityList() {
               </RecommendedTr>
             ))}
             {regularPosts.map((post) => (
-              <Tr key={post.id}>
+              <Tr key={post.id} onClick={() => handlePostClick(post.id)}>
                 <Td>{post.id}</Td>
                 <Td>
                   <TitleCell>
