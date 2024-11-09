@@ -77,16 +77,6 @@ const SlideContent = styled.div`
   cursor: pointer;
 `;
 
-const SlideCaption = styled.div`
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-`;
-
 const EnlargedImageOverlay = styled.div`
   position: fixed;
   top: 0;
@@ -193,7 +183,7 @@ export default function Component() {
 
   useEffect(() => {
     if (accessToken === null) {
-      alert("로그인이 필요합니다.");
+      alert("학습자료를 확인하려면 로그인이 필요합니다.");
       navigate("/login");
       return;
     }

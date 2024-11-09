@@ -129,7 +129,7 @@ const ErrorMessage = styled.div`
   text-align: center;
 `;
 
-const PolaroidGallery = () => {
+const Learning = () => {
   const navigate = useNavigate();
   const [learningMaterials, setLearningMaterials] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -138,7 +138,7 @@ const PolaroidGallery = () => {
 
   useEffect(() => {
     if (accessToken === null) {
-      alert("로그인이 필요합니다.");
+      alert("학습자료를 확인하려면 로그인이 필요합니다.");
       navigate("/login");
       return;
     }
@@ -180,6 +180,7 @@ const PolaroidGallery = () => {
     }
   };
 
+  //기본 이미지 설정
   const defaultImages = [
     "/slide1.jpg",
     "/slide2.jpg",
@@ -242,4 +243,4 @@ const PolaroidGallery = () => {
   );
 };
 
-export default PolaroidGallery;
+export default Learning;
