@@ -116,7 +116,7 @@ const InfoContainer = styled.div`
 const InfoBox = styled.div`
   padding: 2rem;
   animation: ${slideIn} 0.5s ease-out;
-  display: ${(props) => (props.isActive ? "block" : "none")};
+  display: ${(props) => (props.isactive === "true" ? "block" : "none")};
   flex-grow: 1;
   overflow-y: auto;
 `;
@@ -294,7 +294,7 @@ export default function Component() {
         <InfoSection>
           <InfoContainer>
             {learningMaterial.info.map((info, index) => (
-              <InfoBox key={index} isActive={index === currentInfoIndex}>
+              <InfoBox key={index} isactive={(index === currentInfoIndex).toString()}>
                 <Title>{info.title}</Title>
                 <Content>{info.content}</Content>
               </InfoBox>

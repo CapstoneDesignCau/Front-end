@@ -185,7 +185,7 @@ const CreatePostButton = styled.button`
   }
 `;
 
-const formatDate = (dateString: string) => {
+const formatDate = (dateString) => {
   const date = new Date(dateString);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -203,13 +203,13 @@ export default function CommunityList() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
-  const [shouldSearch, setShouldSearch] = useState(false); // Added new state
+  const [shouldSearch, setShouldSearch] = useState(false);
   const navigate = useNavigate();
   const { accessToken } = useUserStore();
 
   useEffect(() => {
     if (accessToken === null) {
-      alert("로그인이 필요합니다.");
+      alert("커뮤니티를 확인하려면 로그인이 필요합니다.");
       navigate("/login");
       return;
     }
@@ -244,7 +244,6 @@ export default function CommunityList() {
   useEffect(() => {
     const searchPosts = async () => {
       if (isSearching && shouldSearch) {
-        // Modified condition
         try {
           const response = await searchPostsByTitle(searchTerm, {
             page: currentPage,
@@ -260,12 +259,12 @@ export default function CommunityList() {
           console.error("Error searching posts:", error);
           alert("게시물 검색에 실패했습니다. 다시 시도해 주세요.");
         }
-        setShouldSearch(false); // Added to reset shouldSearch after search
+        setShouldSearch(false);
       }
     };
 
     searchPosts();
-  }, [isSearching, shouldSearch, searchTerm, currentPage]); // Added shouldSearch to dependency array
+  }, [isSearching, shouldSearch, searchTerm, currentPage]);
 
   const handleSearch = (e) => {
     e.preventDefault();
