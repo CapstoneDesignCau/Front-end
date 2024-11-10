@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { Search, Paperclip } from "lucide-react";
+import { Search, Paperclip, PlusCircle } from "lucide-react";
+import useUserStore from "../store/userStorage";
+import { getTopPosts, getPosts, searchPostsByTitle } from "../api/postService";
+import { setRccToken } from "../api/axios";
 
 const Container = styled.div`
   max-width: 1400px;
@@ -106,12 +109,18 @@ const PaginationButton = styled.button`
     background-color: #ebf8ff;
     color: #3182ce;
   }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 const SearchForm = styled.form`
   display: flex;
   justify-content: center;
   margin-top: 1rem;
+  align-items: center;
 `;
 
 const SearchContainer = styled.div`
@@ -149,91 +158,198 @@ const SearchButton = styled.button`
   }
 `;
 
-const initialPosts = [
-  {
-    id: 1,
-    title: "게시글 1 - 인기글 테스트 중입니다. 긴 제목의 게시글입니다.",
-    author: "작성자1",
-    date: "2024.10.01",
-    comments: 21,
-    likes: 123,
-    hasFile: true,
-  },
-  {
-    id: 2,
-    title: "게시글 2",
-    author: "작성자2",
-    date: "2024.10.02",
-    comments: 23,
-    likes: 111,
-    hasFile: false,
-  },
-  {
-    id: 3,
-    title: "게시글 3 - 긴 게시글의 제목 Test .",
-    author: "작성자3",
-    date: "2024.10.03",
-    comments: 18,
-    likes: 100,
-    hasFile: true,
-  },
-  {
-    id: 20,
-    title: "게시글 20",
-    author: "작성자20",
-    date: "2024.10.20",
-    comments: 0,
-    likes: 8,
-    hasFile: false,
-  },
-  {
-    id: 19,
-    title: "게시글 19 - 푸앙푸앙",
-    author: "작성자19",
-    date: "2024.10.19",
-    comments: 6,
-    likes: 4,
-    hasFile: true,
-  },
-  {
-    id: 18,
-    title: "게시글 18",
-    author: "작성자18",
-    date: "2024.10.18",
-    comments: 2,
-    likes: 7,
-    hasFile: false,
-  },
-  {
-    id: 17,
-    title: "게시글 17",
-    author: "작성자17",
-    date: "2024.10.17",
-    comments: 1,
-    likes: 9,
-    hasFile: true,
-  },
-];
+const EllipsisSpan = styled.span`
+  padding: 0.5rem 0.75rem;
+`;
+
+const CreatePostButton = styled.button`
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+  margin-left: 1rem;
+
+  &:hover {
+    background-color: #45a049;
+  }
+
+  svg {
+    margin-right: 0.5rem;
+  }
+`;
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+
+  return `${year}.${month}.${day} ${hours}:${minutes}`;
+};
 
 export default function CommunityList() {
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState([]);
+  const [topPosts, setTopPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [shouldSearch, setShouldSearch] = useState(false); // Added new state
   const navigate = useNavigate();
+  const { accessToken } = useUserStore();
 
-  const sortedPosts = [...posts].sort((a, b) => b.likes - a.likes);
-  const recommendedPosts = sortedPosts.slice(0, 3);
-  const regularPosts = sortedPosts.slice(3);
+  useEffect(() => {
+    if (accessToken === null) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    setRccToken(accessToken);
+
+    const fetchPosts = async () => {
+      try {
+        const [topPostsResponse, postsResponse] = await Promise.all([
+          getTopPosts(),
+          getPosts({ page: currentPage, size: 10 }),
+        ]);
+
+        if (topPostsResponse.data.isSuccess && postsResponse.data.isSuccess) {
+          setTopPosts(topPostsResponse.data.result);
+          setPosts(postsResponse.data.result.content);
+          setTotalPages(postsResponse.data.result.totalPages);
+        } else {
+          throw new Error("Failed to fetch posts");
+        }
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+        alert("게시물을 불러오는데 실패했습니다. 다시 시도해 주세요.");
+      }
+    };
+
+    if (!isSearching) {
+      fetchPosts();
+    }
+  }, [accessToken, navigate, currentPage, isSearching]);
+
+  useEffect(() => {
+    const searchPosts = async () => {
+      if (isSearching && shouldSearch) {
+        // Modified condition
+        try {
+          const response = await searchPostsByTitle(searchTerm, {
+            page: currentPage,
+            size: 10,
+          });
+          if (response.data.isSuccess) {
+            setPosts(response.data.result.content);
+            setTotalPages(response.data.result.totalPages);
+          } else {
+            throw new Error("Failed to search posts");
+          }
+        } catch (error) {
+          console.error("Error searching posts:", error);
+          alert("게시물 검색에 실패했습니다. 다시 시도해 주세요.");
+        }
+        setShouldSearch(false); // Added to reset shouldSearch after search
+      }
+    };
+
+    searchPosts();
+  }, [isSearching, shouldSearch, searchTerm, currentPage]); // Added shouldSearch to dependency array
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const filteredPosts = initialPosts.filter((post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setPosts(filteredPosts);
+    if (searchTerm.trim() !== "") {
+      setIsSearching(true);
+      setShouldSearch(true); // Added to trigger search
+      setCurrentPage(0);
+    } else {
+      setIsSearching(false);
+      setShouldSearch(false); // Added to prevent unnecessary searches
+    }
+  };
+
+  const handleSearchInputChange = (e) => {
+    setSearchTerm(e.target.value);
+    if (e.target.value.trim() === "") {
+      setIsSearching(false);
+      setShouldSearch(false); // Added to prevent unnecessary searches
+    }
   };
 
   const handlePostClick = (postId) => {
     navigate(`/community/${postId}`);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page - 1); // API uses 0-based index for pages
+  };
+
+  const renderPaginationButtons = () => {
+    const pageNumbers = [];
+    let startPage, endPage;
+    if (totalPages <= 10) {
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      if (currentPage <= 6) {
+        startPage = 1;
+        endPage = 10;
+      } else if (currentPage + 4 >= totalPages) {
+        startPage = totalPages - 9;
+        endPage = totalPages;
+      } else {
+        startPage = currentPage - 5;
+        endPage = currentPage + 4;
+      }
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pageNumbers.push(
+        <PaginationButton
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={i === currentPage + 1 ? "active" : ""}
+        >
+          {i}
+        </PaginationButton>
+      );
+    }
+
+    if (startPage > 1) {
+      pageNumbers.unshift(
+        <EllipsisSpan key="start-ellipsis">...</EllipsisSpan>
+      );
+      pageNumbers.unshift(
+        <PaginationButton key={1} onClick={() => handlePageChange(1)}>
+          1
+        </PaginationButton>
+      );
+    }
+
+    if (endPage < totalPages) {
+      pageNumbers.push(<EllipsisSpan key="end-ellipsis">...</EllipsisSpan>);
+      pageNumbers.push(
+        <PaginationButton
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </PaginationButton>
+      );
+    }
+
+    return pageNumbers;
   };
 
   return (
@@ -251,39 +367,40 @@ export default function CommunityList() {
             </tr>
           </thead>
           <tbody>
-            {recommendedPosts.map((post) => (
-              <RecommendedTr
-                key={post.id}
-                onClick={() => handlePostClick(post.id)}
-              >
-                <Td>
-                  <RecommendedBadge>⭐️ 추천 ⭐️</RecommendedBadge>
-                </Td>
-                <Td>
-                  <TitleCell>
-                    <TitleText>{post.title}</TitleText>
-                    {post.hasFile && (
-                      <Paperclip
-                        size={16}
-                        style={{ marginLeft: "0.5rem", flexShrink: 0 }}
-                        aria-label="파일 첨부됨"
-                      />
-                    )}
-                  </TitleCell>
-                </Td>
-                <Td>{post.author}</Td>
-                <Td>{post.date}</Td>
-                <Td style={{ textAlign: "center" }}>{post.comments}</Td>
-                <Td style={{ textAlign: "center" }}>{post.likes}</Td>
-              </RecommendedTr>
-            ))}
-            {regularPosts.map((post) => (
+            {!isSearching &&
+              topPosts.map((post) => (
+                <RecommendedTr
+                  key={post.id}
+                  onClick={() => handlePostClick(post.id)}
+                >
+                  <Td>
+                    <RecommendedBadge>⭐️ 추천 ⭐️</RecommendedBadge>
+                  </Td>
+                  <Td>
+                    <TitleCell>
+                      <TitleText>{post.title}</TitleText>
+                      {post.hasFiles && (
+                        <Paperclip
+                          size={16}
+                          style={{ marginLeft: "0.5rem", flexShrink: 0 }}
+                          aria-label="파일 첨부됨"
+                        />
+                      )}
+                    </TitleCell>
+                  </Td>
+                  <Td>{post.writerNickname}</Td>
+                  <Td>{formatDate(post.createdAt)}</Td>
+                  <Td style={{ textAlign: "center" }}>{post.commentCount}</Td>
+                  <Td style={{ textAlign: "center" }}>{post.likeCount}</Td>
+                </RecommendedTr>
+              ))}
+            {posts.map((post) => (
               <Tr key={post.id} onClick={() => handlePostClick(post.id)}>
                 <Td>{post.id}</Td>
                 <Td>
                   <TitleCell>
                     <TitleText>{post.title}</TitleText>
-                    {post.hasFile && (
+                    {post.hasFiles && (
                       <Paperclip
                         size={16}
                         style={{ marginLeft: "0.5rem", flexShrink: 0 }}
@@ -292,10 +409,10 @@ export default function CommunityList() {
                     )}
                   </TitleCell>
                 </Td>
-                <Td>{post.author}</Td>
-                <Td>{post.date}</Td>
-                <Td style={{ textAlign: "center" }}>{post.comments}</Td>
-                <Td style={{ textAlign: "center" }}>{post.likes}</Td>
+                <Td>{post.writerNickname}</Td>
+                <Td>{formatDate(post.createdAt)}</Td>
+                <Td style={{ textAlign: "center" }}>{post.commentCount}</Td>
+                <Td style={{ textAlign: "center" }}>{post.likeCount}</Td>
               </Tr>
             ))}
           </tbody>
@@ -303,13 +420,19 @@ export default function CommunityList() {
       </Card>
 
       <Pagination>
-        <PaginationButton>&laquo;</PaginationButton>
-        {[1, 2, 3, 4, 5].map((page) => (
-          <PaginationButton key={page} className={page === 1 ? "active" : ""}>
-            {page}
-          </PaginationButton>
-        ))}
-        <PaginationButton>&raquo;</PaginationButton>
+        <PaginationButton
+          onClick={() => handlePageChange(1)}
+          disabled={currentPage === 0}
+        >
+          &laquo;
+        </PaginationButton>
+        {renderPaginationButtons()}
+        <PaginationButton
+          onClick={() => handlePageChange(totalPages)}
+          disabled={currentPage === totalPages - 1}
+        >
+          &raquo;
+        </PaginationButton>
       </Pagination>
 
       <SearchForm onSubmit={handleSearch}>
@@ -319,12 +442,22 @@ export default function CommunityList() {
             type="text"
             placeholder="검색어를 입력해주세요"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchInputChange}
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault(); // Added to prevent default form submission
+                handleSearch(e);
+              }
+            }}
           />
           <SearchButton type="submit">
             <Search size={20} />
           </SearchButton>
         </SearchContainer>
+        <CreatePostButton onClick={() => navigate("/community/create")}>
+          <PlusCircle size={20} />
+          게시글 작성
+        </CreatePostButton>
       </SearchForm>
     </Container>
   );
