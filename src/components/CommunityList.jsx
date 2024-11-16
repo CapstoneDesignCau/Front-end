@@ -163,7 +163,7 @@ const EllipsisSpan = styled.span`
 `;
 
 const CreatePostButton = styled.button`
-  background-color: #4caf50;
+  background-color: #3182ce;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -174,12 +174,11 @@ const CreatePostButton = styled.button`
   display: flex;
   align-items: center;
   transition: background-color 0.3s;
-  margin-left: 1rem;
-
+  margin-top: 1rem;
+  margin-left: auto;
   &:hover {
-    background-color: #45a049;
+    background-color: #2c5282;
   }
-
   svg {
     margin-right: 0.5rem;
   }
@@ -270,11 +269,11 @@ export default function CommunityList() {
     e.preventDefault();
     if (searchTerm.trim() !== "") {
       setIsSearching(true);
-      setShouldSearch(true); // Added to trigger search
+      setShouldSearch(true);
       setCurrentPage(0);
     } else {
       setIsSearching(false);
-      setShouldSearch(false); // Added to prevent unnecessary searches
+      setShouldSearch(false);
     }
   };
 
@@ -282,7 +281,7 @@ export default function CommunityList() {
     setSearchTerm(e.target.value);
     if (e.target.value.trim() === "") {
       setIsSearching(false);
-      setShouldSearch(false); // Added to prevent unnecessary searches
+      setShouldSearch(false);
     }
   };
 
@@ -291,7 +290,7 @@ export default function CommunityList() {
   };
 
   const handlePageChange = (page) => {
-    setCurrentPage(page - 1); // API uses 0-based index for pages
+    setCurrentPage(page - 1);
   };
 
   const renderPaginationButtons = () => {
@@ -418,6 +417,13 @@ export default function CommunityList() {
         </Table>
       </Card>
 
+      <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%' }}>
+        <CreatePostButton onClick={() => navigate("/community/create")}>
+          <PlusCircle size={20} />
+          게시글 작성
+        </CreatePostButton>
+      </div>
+
       <Pagination>
         <PaginationButton
           onClick={() => handlePageChange(1)}
@@ -444,7 +450,7 @@ export default function CommunityList() {
             onChange={handleSearchInputChange}
             onKeyPress={(e) => {
               if (e.key === "Enter") {
-                e.preventDefault(); // Added to prevent default form submission
+                e.preventDefault();
                 handleSearch(e);
               }
             }}
@@ -453,10 +459,6 @@ export default function CommunityList() {
             <Search size={20} />
           </SearchButton>
         </SearchContainer>
-        <CreatePostButton onClick={() => navigate("/community/create")}>
-          <PlusCircle size={20} />
-          게시글 작성
-        </CreatePostButton>
       </SearchForm>
     </Container>
   );

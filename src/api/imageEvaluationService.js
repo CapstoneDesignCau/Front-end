@@ -27,3 +27,12 @@ export const getRecentImageEvaluations = () =>
 // 평가를 요청한 모든 이미지 목록 조회 API
 export const getAllImageEvaluations = () =>
   API.get("/api/imageEvaluation/list/all");
+
+// 내가 평가를 요청한 이미지 목록 조회 API
+export const getUploadedImages = (page, size) =>
+  API.get(`/api/imageEvaluation/list`, {
+    params: {
+      page: page,
+      size: size,
+    },
+  });
