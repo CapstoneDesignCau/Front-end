@@ -106,7 +106,7 @@ function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { accessToken, profileImageUrl, clearUser } = useUserStore();
+  const { accessToken, profileImageUrl, clearUser, role } = useUserStore();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -120,6 +120,22 @@ function Navigation() {
 
   const NavItems = () => (
     <>
+      {role === 'ADMIN' && (
+        <>
+          <StyledLink
+            to="/admin/weekly-photo"
+            className={location.pathname === "/admin/weekly-photo" ? "active" : ""}
+          >
+            Admin Weekly Photo
+          </StyledLink>
+          <StyledLink
+            to="/admin/learning"
+            className={location.pathname === "/admin/learning" ? "active" : ""}
+          >
+            Admin Learning
+          </StyledLink>
+        </>
+      )}
       <StyledLink
         to="/weekly-photo"
         className={location.pathname === "/weekly-photo" ? "active" : ""}
