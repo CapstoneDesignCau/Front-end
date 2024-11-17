@@ -148,7 +148,7 @@ const Learning = () => {
     const fetchLearningMaterials = async () => {
       try {
         const response = await getLearningMaterials();
-        console.log(response.data);
+        //console.log(response.data);
         if (response.data.isSuccess === true) {
           setLearningMaterials(response.data.result);
         } else {
