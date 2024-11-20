@@ -4,13 +4,14 @@ import { API, FORMAPI } from './axios';
 export const createPost = (postCreateRequestDto, files) => {
   const formData = new FormData();
   formData.append('post', new Blob([JSON.stringify(postCreateRequestDto)], { type: 'application/json' }));
-  if (files) {
+  if (files && files.length > 0) {
     files.forEach((file, index) => {
-      formData.append(`files[${index}]`, file);
+      formData.append('files', file);
     });
   }
   return FORMAPI.post('/api/post', formData);
 };
+
 
 // 특정 게시물 조회 API
 export const getPost = (id) => API.get(`/api/post/${id}`);
