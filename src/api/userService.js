@@ -45,5 +45,8 @@ export const updatePassword = (passwordUpdateRequestDto) =>
 // 유저 정보 조회 API
 export const getUserInfo = () => API.get("/api/user/info");
 
+// 닉네임 조회 API
+export const getNickname = () => API.get("/api/user/nickname");
+
 // 프로필 이미지 URL 조회 API
 export const getProfileImageUrl = () => API.get("/api/user/profile/image");

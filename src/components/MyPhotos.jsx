@@ -181,7 +181,7 @@ export default function MyPhotos() {
 
   useEffect(() => {
     if (accessToken === null) {
-      alert("학습자료를 확인하려면 로그인이 필요합니다.");
+      alert("내가 올린 사진을 확인하려면 로그인이 필요합니다.");
       navigate("/login");
       return;
     }

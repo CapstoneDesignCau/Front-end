@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import styled from "styled-components";
 import { setRccToken } from "../api/axios";
-import { login, getUserRole, getProfileImageUrl } from "../api/userService";
+import { login, getUserRole, getProfileImageUrl, getNickname } from "../api/userService";
 import { Eye, EyeOff } from "lucide-react";
 import useUserStore from "../store/userStorage";
 
@@ -125,7 +125,7 @@ const Login = () => {
   } = useForm();
   const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { setAccessToken, setRole, setProfileImageUrl } = useUserStore();
+  const { setAccessToken, setRole, setProfileImageUrl, setNickname } = useUserStore();
 
   const onSubmit = async (data) => {
     const { email, password, rememberMe } = data;
@@ -156,6 +156,16 @@ const Login = () => {
         } catch (error) {
           console.log("profileImageUrl Api error", error);
         }
+
+      // 유저 닉네임 조회
+      try {
+        const nicknameResponse = await getNickname();
+        setNickname(nicknameResponse.data.result);
+        console.log("유저 닉네임 조회 API 실행", nicknameResponse.data.result);
+      } catch (error) {
+        console.log("nickname Api error", error);
+      }
+
 
         if (rememberMe) {
           localStorage.setItem("rememberMe", email);
