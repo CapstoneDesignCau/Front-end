@@ -1,31 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import styled, { keyframes } from 'styled-components';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import styled, { keyframes } from "styled-components";
+import { useParams, useNavigate } from "react-router-dom";
+import { getLearningMaterial } from "../api/learningMaterialService";
+import useUserStore from "../store/userStorage";
+import { setRccToken } from "../api/axios";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 `;
 
 const slideIn = keyframes`
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 `;
 
 const PageContainer = styled.div`
-  width: 1200px;
-  height: 550px;
+  width: 100%;
+  max-width: 1200px;
+  min-height: 600px;
   margin: 0 auto;
+  background-color: #f0f0f0;
   display: flex;
   flex-direction: column;
   animation: ${fadeIn} 0.3s ease-out;
@@ -33,63 +31,94 @@ const PageContainer = styled.div`
 
 const TitleBar = styled.div`
   color: #333;
-  padding: 1rem;
-  font-size: 1.5rem;
+  padding: 2rem;
+  font-size: 1.8rem;
+  background-color: #e0e0e0;
   z-index: 10;
 `;
 
 const ContentWrapper = styled.div`
   display: flex;
   flex: 1;
+  padding: 2rem;
 `;
 
 const ImageSection = styled.div`
-  position: relative;
-  width: 600px;
-  height: 500px;
-  overflow: hidden;
+  width: 50%;
+  height: 400px;
 `;
 
-const Image = styled.img`
-  position: absolute;
+const SliderContainer = styled.div`
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: opacity 0.5s ease-in-out;
-  opacity: ${props => props.isActive ? 1 : 0};
+  .slick-slide img {
+    width: 100%;
+    height: 400px;
+    object-fit: contain;
+  }
+  .slick-prev,
+  .slick-next {
+    z-index: 1;
+    &:before {
+      font-size: 30px;
+      color: #333;
+    }
+  }
+  .slick-prev {
+    left: 10px;
+  }
+  .slick-next {
+    right: 10px;
+  }
 `;
 
-const InfoSection = styled.div`
-  width: 600px;
-  height: 500px;
+const SlideContent = styled.div`
   position: relative;
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  cursor: pointer;
 `;
 
-const InfoContainer = styled.div`
-  width: 90%;
-  height: 90%;
-  background-color: #f0f0f0;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  position: relative;
-`;
-
-const InfoBox = styled.div`
-  position: absolute;
+const EnlargedImageOverlay = styled.div`
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
+const EnlargedImage = styled.img`
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+`;
+
+const InfoSection = styled.div`
+  width: 50%;
+  padding-left: 2rem;
+  display: flex;
+  flex-direction: column;
+`;
+
+const InfoContainer = styled.div`
   background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const InfoBox = styled.div`
   padding: 2rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   animation: ${slideIn} 0.5s ease-out;
-  display: ${props => props.isActive ? 'block' : 'none'};
+  display: ${(props) => (props.isactive === "true" ? "block" : "none")};
+  flex-grow: 1;
+  overflow-y: auto;
 `;
 
 const Title = styled.h2`
@@ -104,11 +133,9 @@ const Content = styled.p`
 `;
 
 const NavButtons = styled.div`
-  position: absolute;
-  bottom: 1rem;
-  right: 1rem;
   display: flex;
-  gap: 1rem;
+  justify-content: flex-end;
+  padding: 1rem;
 `;
 
 const NavButton = styled.button`
@@ -116,6 +143,7 @@ const NavButton = styled.button`
   color: white;
   border: none;
   padding: 0.5rem 1rem;
+  margin-left: 1rem;
   cursor: pointer;
   transition: background-color 0.3s;
 
@@ -129,114 +157,144 @@ const NavButton = styled.button`
   }
 `;
 
-const learningMaterials = [
-  {
-    id: 1,
-    title: "자연 사진 촬영 기법",
-    images: [
-      '/placeholder.svg?height=600&width=600&text=Nature+Photo+1',
-      '/placeholder.svg?height=600&width=600&text=Nature+Photo+2',
-      '/placeholder.svg?height=600&width=600&text=Nature+Photo+3',
-    ],
-    info: [
-      {
-        title: "이럴 때 참고하세요!",
-        content: "야외 촬영 시 자연광을 최대한 활용하세요."
-      },
-      {
-        title: "핵심 키워드!",
-        content: "구도, 자연광, 피사체"
-      },
-      {
-        title: "사진 예쁘게 찍는 법",
-        content: "삼분할 구도를 활용하고, 피사체에 초점을 맞추세요."
-      },
-      {
-        title: "추가 꿀팁!",
-        content: "골든아워(일출 직후, 일몰 직전)에 촬영하면 더욱 아름다운 사진을 얻을 수 있어요!"
-      }
-    ]
-  },
-  {
-    id: 2,
-    title: "인물 사진 촬영 기법",
-    images: [
-      '/placeholder.svg?height=600&width=600&text=Portrait+Photo+1',
-      '/placeholder.svg?height=600&width=600&text=Portrait+Photo+2',
-      '/placeholder.svg?height=600&width=600&text=Portrait+Photo+3',
-    ],
-    info: [
-      {
-        title: "이럴 때 참고하세요!",
-        content: "인물 촬영 시 자연스러운 표정을 유도하세요."
-      },
-      {
-        title: "핵심 키워드!",
-        content: "포즈, 조명, 배경"
-      },
-      {
-        title: "사진 예쁘게 찍는 법",
-        content: "눈높이에 맞춰 촬영하고, 부드러운 조명을 사용하세요."
-      },
-      {
-        title: "추가 꿀팁!",
-        content: "모델과 대화를 나누며 촬영하면 더 자연스러운 표정을 얻을 수 있어요!"
-      }
-    ]
-  },
-];
+const LoadingMessage = styled.div`
+  font-size: 1.5rem;
+  color: #333;
+  text-align: center;
+  margin-top: 2rem;
+`;
+
+const ErrorMessage = styled.div`
+  font-size: 1.5rem;
+  color: #ff0000;
+  text-align: center;
+  margin-top: 2rem;
+`;
 
 export default function Component() {
   const { learningId } = useParams();
   const navigate = useNavigate();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentInfoIndex, setCurrentInfoIndex] = useState(0);
-
-  const learningMaterial = learningMaterials.find(material => material.id === Number(learningId));
+  const [learningMaterial, setLearningMaterial] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { accessToken } = useUserStore();
+  const [enlargedImage, setEnlargedImage] = useState(null);
 
   useEffect(() => {
-    if (!learningMaterial) {
-      navigate('/');
+    if (accessToken === null) {
+      alert("학습자료를 확인하려면 로그인이 필요합니다.");
+      navigate("/login");
       return;
     }
 
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % learningMaterial.images.length);
-    }, 3000);
+    setRccToken(accessToken);
 
-    return () => clearInterval(timer);
-  }, [learningMaterial, navigate]);
+    const fetchLearningMaterial = async () => {
+      try {
+        const response = await getLearningMaterial(learningId);
+        if (response.data.isSuccess) {
+          const material = response.data.result;
+          setLearningMaterial({
+            id: material.id,
+            title: material.title,
+            images: material.images.map((img) => ({
+              image: img.fileUrl,
+            })),
+            info: [
+              { title: "이럴 때 참고하세요!", content: material.referenceInfo },
+              {
+                title: "핵심 키워드!",
+                content: material.keyWord || "키워드가 없습니다.",
+              },
+              { title: "사진 예쁘게 찍는 법", content: material.prettyManner },
+              { title: "추가 꿀팁!", content: material.tips },
+            ],
+          });
+        } else {
+          throw new Error("Failed to fetch learning material");
+        }
+        setIsLoading(false);
+      } catch (err) {
+        setError("Failed to fetch learning material. Please try again later.");
+        setIsLoading(false);
+      }
+    };
+
+    fetchLearningMaterial();
+  }, [accessToken, learningId, navigate]);
+
+  const handleNextInfo = () => {
+    if (learningMaterial) {
+      setCurrentInfoIndex(
+        (prevIndex) => (prevIndex + 1) % learningMaterial.info.length
+      );
+    }
+  };
+
+  const handlePrevInfo = () => {
+    if (learningMaterial) {
+      setCurrentInfoIndex(
+        (prevIndex) =>
+          (prevIndex - 1 + learningMaterial.info.length) %
+          learningMaterial.info.length
+      );
+    }
+  };
+
+  const handleImageClick = (src) => {
+    setEnlargedImage(src);
+  };
+
+  const handleCloseEnlargedImage = () => {
+    setEnlargedImage(null);
+  };
+
+  const settings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 5000,
+    pauseOnHover: true,
+  };
+
+  if (isLoading) {
+    return <LoadingMessage>Loading learning material...</LoadingMessage>;
+  }
+
+  if (error) {
+    return <ErrorMessage>{error}</ErrorMessage>;
+  }
 
   if (!learningMaterial) {
     return null;
   }
-
-  const handleNextInfo = () => {
-    setCurrentInfoIndex((prevIndex) => (prevIndex + 1) % learningMaterial.info.length);
-  };
-
-  const handlePrevInfo = () => {
-    setCurrentInfoIndex((prevIndex) => (prevIndex - 1 + learningMaterial.info.length) % learningMaterial.info.length);
-  };
 
   return (
     <PageContainer>
       <TitleBar>{learningMaterial.title}</TitleBar>
       <ContentWrapper>
         <ImageSection>
-          {learningMaterial.images.map((src, index) => (
-            <Image 
-              key={src} 
-              src={src} 
-              alt={`Learning material ${learningId} - image ${index + 1}`} 
-              isActive={index === currentImageIndex}
-            />
-          ))}
+          <SliderContainer>
+            <Slider {...settings}>
+              {learningMaterial.images.map((slide, index) => (
+                <SlideContent
+                  key={index}
+                  onClick={() => handleImageClick(slide.image)}
+                >
+                  <img src={slide.image} alt={`Slide ${index + 1}`} />
+                </SlideContent>
+              ))}
+            </Slider>
+          </SliderContainer>
         </ImageSection>
         <InfoSection>
           <InfoContainer>
             {learningMaterial.info.map((info, index) => (
-              <InfoBox key={index} isActive={index === currentInfoIndex}>
+              <InfoBox key={index} isactive={(index === currentInfoIndex).toString()}>
                 <Title>{info.title}</Title>
                 <Content>{info.content}</Content>
               </InfoBox>
@@ -248,6 +306,11 @@ export default function Component() {
           </InfoContainer>
         </InfoSection>
       </ContentWrapper>
+      {enlargedImage && (
+        <EnlargedImageOverlay onClick={handleCloseEnlargedImage}>
+          <EnlargedImage src={enlargedImage} alt="Enlarged view" />
+        </EnlargedImageOverlay>
+      )}
     </PageContainer>
   );
 }

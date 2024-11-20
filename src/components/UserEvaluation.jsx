@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import { updatePhotoRankCounts, getPhotoRanks } from '../api/photoRankService';
 
 const Container = styled.div`
   max-width: 1200px;
@@ -157,69 +158,104 @@ const StatisticsOverlay = styled.div`
   font-size: 1rem;
 `;
 
+
 export default function PhotoOfTheWeek() {
   const [photos, setPhotos] = useState([]);
+  const [currentPair, setCurrentPair] = useState([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [showResult, setShowResult] = useState(false);
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [enlargedPhoto, setEnlargedPhoto] = useState(null);
-  const [statistics, setStatistics] = useState({});
 
   useEffect(() => {
-    const dummyPhotos = [
-      { id: 1, url: '/picture1.webp' },
-      { id: 2, url: '/picture2.jpeg' },
-      { id: 3, url: '/picture3.avif' },
-      { id: 4, url: '/picture4.avif' },
-      { id: 5, url: '/picture5.avif' },
-      { id: 6, url: '/picture6.avif' },
-      { id: 7, url: '/picture7.avif' },
-      { id: 8, url: '/picture8.avif' },
-      { id: 9, url: '/picture9.jpeg' },
-      { id: 10, url: '/picture10.jpeg' },
-      { id: 11, url: '/picture11.jpeg' },
-      { id: 12, url: '/picture12.avif' },
-      { id: 13, url: '/picture13.avif' },
-      { id: 14, url: '/picture14.avif' },
-      { id: 15, url: '/picture15.avif' },
-      { id: 16, url: '/picture16.avif' },
-    ];
-    setPhotos(dummyPhotos);
-
-    setDateRange({
-      start: '2024-11-04',
-      end: '2024-11-10'
-    });
-
-    // 예시 통계 데이터 (실제로는 API에서 가져와야 함)
-    const dummyStats = {};
-    dummyPhotos.forEach(photo => {
-      dummyStats[photo.id] = `${Math.floor(Math.random() * 100)}/${Math.floor(Math.random() * 1000)}`;
-    });
-    setStatistics(dummyStats);
-  }, []);
-
-  const selectPhoto = useCallback((photo) => {
-    setSelectedPhotos(prev => [...prev, photo]);
-    setCurrentRound(prev => {
-      const newRound = prev + 1;
-      if (newRound === 4) {
-        setShowResult(true);
+    const fetchPhotos = async () => {
+      try {
+        const response = await getPhotoRanks();
+        if (response.data.isSuccess) {
+          const fetchedPhotos = response.data.result.map(photo => ({
+            id: photo.id,
+            url: photo.fileResponse.fileUrl,
+            appearanceCount: photo.appearanceCount,
+            selectedCount: photo.selectedCount
+          }));
+          const shuffledPhotos = shuffleArray(fetchedPhotos); // 랜덤으로 사진 셔플
+          setPhotos(shuffledPhotos);
+          setCurrentPair(shuffledPhotos.slice(0, 2));
+        } else {
+          throw new Error("Failed to fetch photos");
+        }
+      } catch (error) {
+        console.error("Error fetching photos:", error);
+        alert("Failed to load photos. Please try again.");
       }
-      return newRound;
-    });
+    };
+
+    fetchPhotos();
   }, []);
 
-  const getCurrentPair = useCallback(() => {
-    const shuffled = [...photos].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 2);
-  }, [photos]);
+  const shuffleArray = (array) => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const selectPhoto = useCallback(async (selectedPhoto) => {
+    if (!selectedPhoto || currentPair.length < 2) {
+      console.error("Invalid photo or currentPair");
+      return;
+    }
+
+    const otherPhoto = currentPair.find(p => p.id !== selectedPhoto.id);
+    if (!otherPhoto) {
+      console.error("Could not find other photo");
+      return;
+    }
+
+    const photoRankUpdateRequestDto = {
+      appearanceIds: [selectedPhoto.id, otherPhoto.id],
+      selectedId: selectedPhoto.id
+    };
+
+    try {
+      await updatePhotoRankCounts(photoRankUpdateRequestDto);
+      
+      setPhotos(prevPhotos => prevPhotos.map(photo => {
+        if (photo.id === selectedPhoto.id) {
+          return { ...photo, selectedCount: photo.selectedCount + 1, appearanceCount: photo.appearanceCount + 1 };
+        } else if (photo.id === otherPhoto.id) {
+          return { ...photo, appearanceCount: photo.appearanceCount + 1 };
+        }
+        return photo;
+      }));
+
+      setSelectedPhotos(prev => [...prev, selectedPhoto]);
+      setCurrentRound(prev => {
+        const newRound = prev + 1;
+        if (newRound === 4) {
+          setShowResult(true);
+        } else {
+          const nextPairIndex = newRound * 2;
+          setCurrentPair(photos.slice(nextPairIndex, nextPairIndex + 2));
+        }
+        return newRound;
+      });
+    } catch (error) {
+      console.error("Error updating photo ranks:", error);
+      alert("Failed to update photo selection. Please try again.");
+    }
+  }, [currentPair, photos]);
 
   const getRankedPhotos = useCallback(() => {
-    const ranked = [...selectedPhotos, ...photos.filter(p => !selectedPhotos.includes(p))];
-    return ranked.slice(0, 16);
-  }, [selectedPhotos, photos]);
+    return [...photos].sort((a, b) => {
+      const ratioA = a.appearanceCount === 0 ? 0 : a.selectedCount / a.appearanceCount;
+      const ratioB = b.appearanceCount === 0 ? 0 : b.selectedCount / b.appearanceCount;
+      return ratioB - ratioA;
+    });
+  }, [photos]);
 
   const handlePhotoClick = (photo) => {
     setEnlargedPhoto(photo);
@@ -268,7 +304,7 @@ export default function PhotoOfTheWeek() {
               <ModalContent onClick={(e) => e.stopPropagation()}>
                 <EnlargedPhoto src={enlargedPhoto.url} alt={`Enlarged photo ${enlargedPhoto.id}`} />
                 <StatisticsOverlay>
-                  선택 비율: {statistics[enlargedPhoto.id]}
+                  선택 비율: {`${enlargedPhoto.selectedCount}/${enlargedPhoto.appearanceCount}`}
                 </StatisticsOverlay>
               </ModalContent>
             </Modal>
@@ -277,8 +313,6 @@ export default function PhotoOfTheWeek() {
       </Container>
     );
   }
-
-  const currentPair = getCurrentPair();
 
   return (
     <Container>

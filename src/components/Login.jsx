@@ -136,7 +136,6 @@ const Login = () => {
         //console.log(response.data);
         setRccToken(response.data.result.accessToken);
         setAccessToken(response.data.result.accessToken);
-
         // 유저 역할 조회
         try {
           const roleResponse = await getUserRole();

@@ -20,6 +20,7 @@ import MyPhotos from './components/MyPhotos';
 import AdminUserEvaluation from './components/AdminUserEvaluation';
 import AdminLearningMaterial from './components/AdminLearningMaterial';
 import './App.css';
+import CommunityCreate from './components/CommunityCreate';
 
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
         <Route path="/learning" element={<Learning />} />
         <Route path="/learning/:learningId" element={<LearningMaterial />} />
         <Route path="/community" element={<CommunityList />} />
+        <Route path="/community/create" element={<CommunityCreate />} />
         <Route path="/community/search" element={<CommunityList />} />
         <Route path="/community/:postId" element={<CommunityPost />} />
         <Route path="/user/profile" element={<UserProfile />} />

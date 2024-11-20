@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { getUploadedImages } from '../api/imageEvaluationService';
+import { setRccToken } from '../api/axios';
+import useUserStore from '../store/userStorage';
 
 const GridContainer = styled.div`
   max-width: 1200px;
@@ -168,26 +172,42 @@ const CloseButton = styled.button`
 
 export default function MyPhotos() {
   const [photos, setPhotos] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [totalPages, setTotalPages] = useState(0);
+  const navigate = useNavigate();
+  const { accessToken } = useUserStore();
   const photosPerPage = 9;
 
   useEffect(() => {
-    // 여기서 실제로는 API를 통해 사진 데이터를 가져와야 합니다.
-    const dummyPhotos = Array.from({ length: 20 }, (_, i) => ({
-      id: i + 1,
-      url: `/placeholder.svg?height=300&width=400&text=Photo+${i + 1}`,
-      uploadDate: new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    }));
-    setPhotos(dummyPhotos);
-  }, []);
+    if (accessToken === null) {
+      alert("학습자료를 확인하려면 로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
 
-  const totalPages = Math.ceil(photos.length / photosPerPage);
-  const indexOfLastPhoto = currentPage * photosPerPage;
-  const indexOfFirstPhoto = indexOfLastPhoto - photosPerPage;
-  const currentPhotos = photos.slice(indexOfFirstPhoto, indexOfLastPhoto);
+    setRccToken(accessToken);
 
-  const formatDate = (date) => {
+    const fetchPhotos = async () => {
+      try {
+        const response = await getUploadedImages(currentPage, photosPerPage);
+        if (response.data.isSuccess) {
+          setPhotos(response.data.result.content);
+          setTotalPages(response.data.result.totalPages);
+        } else {
+          throw new Error("Failed to fetch photos");
+        }
+      } catch (error) {
+        console.error("Error fetching photos:", error);
+        alert("사진을 불러오는데 실패했습니다. 다시 시도해 주세요.");
+      }
+    };
+
+    fetchPhotos();
+  }, [accessToken, navigate, currentPage]);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
       year: '2-digit', 
       month: '2-digit', 
@@ -203,29 +223,28 @@ export default function MyPhotos() {
     setSelectedPhoto(null);
   };
 
-
   return (
     <GridContainer>
       <Title>MY PHOTOS</Title>
       <GridView>
-        {currentPhotos.map((photo) => (
+        {photos.map((photo) => (
           <GridItem key={photo.id} onClick={() => handlePhotoClick(photo)}>
-            <Photo src={photo.url} alt={`Photo ${photo.id}`} />
-            <DateLabel>{formatDate(photo.uploadDate)}</DateLabel>
+            <Photo src={photo.evaluationImage.fileUrl} alt={photo.evaluationImage.fileName} />
+            <DateLabel>{formatDate(photo.createdAt)}</DateLabel>
           </GridItem>
         ))}
       </GridView>
       <PaginationContainer>
         <PageButton 
-          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
-          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))} 
+          disabled={currentPage === 0}
         >
           <ChevronLeft size={16} />
         </PageButton>
-        <PageInfo>{currentPage} / {totalPages}</PageInfo>
+        <PageInfo>{currentPage + 1} / {totalPages}</PageInfo>
         <PageButton 
-          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
-          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))} 
+          disabled={currentPage === totalPages - 1}
         >
           <ChevronRight size={16} />
         </PageButton>
@@ -233,7 +252,7 @@ export default function MyPhotos() {
       {selectedPhoto && (
         <Modal onClick={handleCloseModal}>
           <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalImage src={selectedPhoto.url} alt={`Photo ${selectedPhoto.id}`} />
+            <ModalImage src={selectedPhoto.evaluationImage.fileUrl} alt={selectedPhoto.evaluationImage.fileName} />
             <CloseButton onClick={handleCloseModal}>
               <X size={20} />
             </CloseButton>

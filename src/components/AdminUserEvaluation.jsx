@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { X, Upload, Save, Calendar } from 'lucide-react';
+import { X, Upload, Save} from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+import useUserStore from '../store/userStorage';
+import { setRccToken } from '../api/axios';
+import { createPhotoRank } from '../api/photoRankService';
+
 
 const AdminContainer = styled.div`
+  position: relative;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
@@ -128,15 +134,25 @@ export default function AdminWeeklyPhotos() {
   const [photos, setPhotos] = useState([]);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
+  const navigate = useNavigate();
+  const { accessToken, role } = useUserStore();
 
   useEffect(() => {
-    // 여기서 실제로는 API를 통해 사진 데이터를 가져와야 합니다.
-    const dummyPhotos = Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      url: `/placeholder.svg?height=200&width=200&text=Photo+${i + 1}`,
-    }));
-    setPhotos(dummyPhotos);
-  }, []);
+    if (accessToken === null) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    if (role !== 'ADMIN') {
+      alert("접근 권한이 없습니다.");
+      navigate("/");
+      return;
+    }
+
+    setRccToken(accessToken);
+
+  }, [accessToken, role, navigate]);
 
   const handleAddPhotos = (e) => {
     const files = Array.from(e.target.files);
@@ -153,12 +169,27 @@ export default function AdminWeeklyPhotos() {
     setPhotos(photos.filter(photo => photo.id !== id));
   };
 
-  const handleSave = () => {
-    // 여기서 실제로는 API를 통해 변경된 사진 데이터를 서버에 저장해야 합니다.
-    console.log('Saving photos:', photos);
-    console.log('Start Date:', startDate);
-    console.log('End Date:', endDate);
-    alert('Changes saved successfully!');
+  const handleSave = async () => {
+    try {
+      const photoRankCreateRequestDto = {
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+      };
+
+      const files = photos.map(photo => photo.file).filter(Boolean);
+
+      const response = await createPhotoRank(photoRankCreateRequestDto, files);
+
+      if (response.data.isSuccess) {
+        alert('Changes saved successfully!');
+        navigate('/');
+      } else {
+        throw new Error(response.data.message || 'Failed to save changes');
+      }
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      alert('Failed to save changes. Please try again.');
+    }
   };
 
   return (
