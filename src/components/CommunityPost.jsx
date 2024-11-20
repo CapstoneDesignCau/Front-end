@@ -175,16 +175,16 @@ const BlueButton = styled(Button)`
 `;
 
 const LikeButton = styled(Button)`
-  background-color: ${(props) => (props.liked ? "#3182ce" : "#e2e8f0")};
-  color: ${(props) => (props.liked ? "white" : "#4a5568")};
+  background-color: ${(props) => (props.$liked ? "#3182ce" : "#e2e8f0")};
+  color: ${(props) => (props.$liked ? "white" : "#4a5568")};
 
   &:hover {
-    background-color: ${(props) => (props.liked ? "#2c5282" : "#cbd5e0")};
+    background-color: ${(props) => (props.$liked ? "#2c5282" : "#cbd5e0")};
   }
 
   &:disabled {
-    background-color: ${(props) => (props.liked ? "#2c5282" : "#e2e8f0")};
-    color: ${(props) => (props.liked ? "white" : "#a0aec0")};
+    background-color: ${(props) => (props.$liked ? "#2c5282" : "#e2e8f0")};
+    color: ${(props) => (props.$liked ? "white" : "#a0aec0")};
     opacity: 0.7;
     cursor: not-allowed;
   }
@@ -454,7 +454,7 @@ const CommunityPost = () => {
       )}
       <PostContent>{post.content}</PostContent>
       <PostStats>
-        <LikeButton onClick={handleLike} liked={post.isLikedByUser} disabled={post.isLikedByUser}>
+        <LikeButton onClick={handleLike} $liked={post.isLikedByUser} disabled={post.isLikedByUser}>
           <ThumbsUp size={18} />
           <span>{post.likeCount}</span>
         </LikeButton>
@@ -501,14 +501,14 @@ const CommunityPost = () => {
                     {comment.content}
                   </CommentContent>
                   <CommentMeta>
-                    <LikeButton
-                      onClick={() => handleCommentLike(comment.id)}
-                      liked={comment.isLikedByUser}
-                      disabled={comment.isLikedByUser}
-                    >
-                      <ThumbsUp size={14} />
-                      <span>{comment.likeCount}</span>
-                    </LikeButton>
+                  <LikeButton
+                    onClick={() => handleCommentLike(comment.id)}
+                    $liked={comment.isLikedByUser}
+                    disabled={comment.isLikedByUser}
+                  >
+                    <ThumbsUp size={14} />
+                    <span>{comment.likeCount}</span>
+                  </LikeButton>
                     {canDeleteComment(comment) && (
                       <Button onClick={() => handleDeleteComment(comment.id)}>
                         삭제
