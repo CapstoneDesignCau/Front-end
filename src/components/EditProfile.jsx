@@ -281,7 +281,7 @@ const EditProfile = () => {
   return (
     <Container>
       <Header>프로필 수정</Header>
-      <Description>네이버 대표 프로필과 별명을 수정 하실 수 있습니다.</Description>
+      <Description>프로필과 닉네임을 수정 하실 수 있습니다.</Description>
       <ProfileSection>
         <ProfileImage>
           {isDefaultImage ? (
