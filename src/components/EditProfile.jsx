@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { Camera, User, Check, X } from 'lucide-react';
+import { Camera, User, Check, X, Mail, Calendar, Users } from 'lucide-react';
 import useUserStore from '../store/userStorage';
 import { setRccToken } from '../api/axios';
 import { 
@@ -9,7 +9,8 @@ import {
   updateNickname, 
   updateProfile, 
   setDefaultProfileImage,
-  getProfileImageUrl
+  getProfileImageUrl,
+  getUserInfo
 } from '../api/userService';
 
 const Container = styled.div`
@@ -100,7 +101,7 @@ const ImageOverlay = styled.div`
 const Button = styled.button`
   padding: 0.6rem 1rem;
   background-color: #f3f4f6;
-  color: #4b5568;
+  color: #4b5563;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -157,7 +158,7 @@ const ActionButtons = styled.div`
 
 const Label = styled.label`
   font-weight: 500;
-  color: #4b5568;
+  color: #4b5563;
   margin-bottom: 0.5rem;
   display: block;
 `;
@@ -176,6 +177,61 @@ const FeedbackMessage = styled.span`
   gap: 0.5rem;
 `;
 
+const UserInfoCard = styled.div`
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem;
+`;
+
+const CardHeader = styled.div`
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+`;
+
+const CardTitle = styled.h2`
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+`;
+
+const CardContent = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+`;
+
+const InfoItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const InfoLabel = styled.span`
+  font-weight: 500;
+  color: #4b5563;
+`;
+
+const InfoValue = styled.span`
+  color: #1f2937;
+`;
+
+const LoadingMessage = styled.div`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #4b5563;
+  margin-top: 2rem;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #ef4444;
+  margin-top: 2rem;
+`;
+
 const EditProfile = () => {
   const { accessToken, profileImageUrl, nickname: currentNickname, setProfileImageUrl } = useUserStore();
   const [nickname, setNickname] = useState(currentNickname);
@@ -186,6 +242,9 @@ const EditProfile = () => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isProfileImageChanged, setIsProfileImageChanged] = useState(false);
   const [isDefaultImage, setIsDefaultImage] = useState(false);
+  const [userInfo, setUserInfo] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -196,6 +255,23 @@ const EditProfile = () => {
     }
 
     setRccToken(accessToken);
+
+    const fetchUserInfo = async () => {
+      try {
+        const response = await getUserInfo();
+        if (response.data.isSuccess) {
+          setUserInfo(response.data.result);
+        } else {
+          throw new Error("Failed to fetch user info");
+        }
+      } catch (err) {
+        setError("Failed to load user information. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserInfo();
   }, [accessToken, navigate]);
 
   const handleImageChange = (e) => {
@@ -276,23 +352,35 @@ const EditProfile = () => {
     }
   };
 
+  const renderProfileImage = () => {
+    if (isDefaultImage) {
+      return <img src="/default_1.jpg" alt="Default Profile" />;
+    } else if (profileImage) {
+      return <img src={URL.createObjectURL(profileImage)} alt="Profile" />;
+    } else if (profileImageUrl) {
+      return <img src={profileImageUrl} alt="Profile" />;
+    } else {
+      return <User size={48} />;
+    }
+  };
+
   const isChanged = nickname !== currentNickname || isProfileImageChanged;
+
+  if (loading) {
+    return <LoadingMessage>사용자 정보를 불러오는 중...</LoadingMessage>;
+  }
+
+  if (error) {
+    return <ErrorMessage>{error}</ErrorMessage>;
+  }
 
   return (
     <Container>
       <Header>프로필 수정</Header>
-      <Description>프로필과 닉네임을 수정 하실 수 있습니다.</Description>
+      <Description>프로필과 별명을 수정 하실 수 있습니다.</Description>
       <ProfileSection>
         <ProfileImage>
-          {isDefaultImage ? (
-            <img src="/default_1.jpg" alt="Default Profile" />
-          ) : profileImage ? (
-            <img src={URL.createObjectURL(profileImage)} alt="Profile" />
-          ) : profileImageUrl ? (
-            <img src={profileImageUrl} alt="Profile" />
-          ) : (
-            <User size={48} />
-          )}
+          {renderProfileImage()}
           <ImageOverlay>
             <label htmlFor="imageUpload">
               <Camera size={24} color="white" />
@@ -364,6 +452,41 @@ const EditProfile = () => {
           {isUpdating ? '업데이트 중...' : '적용'}
         </PrimaryButton>
       </ActionButtons>
+
+      {userInfo && (
+        <UserInfoCard>
+          <CardHeader>
+            <CardTitle>사용자 정보</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InfoItem>
+              <User size={18} />
+              <InfoLabel>이름:</InfoLabel>
+              <InfoValue>{userInfo.name}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <Mail size={18} />
+              <InfoLabel>이메일:</InfoLabel>
+              <InfoValue>{userInfo.email}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <User size={18} />
+              <InfoLabel>별명:</InfoLabel>
+              <InfoValue>{userInfo.nickname}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <Calendar size={18} />
+              <InfoLabel>생년월일:</InfoLabel>
+              <InfoValue>{userInfo.birthday}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <Users size={18} />
+              <InfoLabel>성별:</InfoLabel>
+              <InfoValue>{userInfo.gender}</InfoValue>
+            </InfoItem>
+          </CardContent>
+        </UserInfoCard>
+      )}
     </Container>
   );
 };
