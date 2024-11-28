@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Plus, Trash2, RefreshCw, X, Upload, Save } from 'lucide-react';
+import useUserStore from '../store/userStorage';
+import { setRccToken } from '../api/axios';
+import {
+  getAllLearningMaterials,
+  createLearningMaterial,
+  deleteLearningMaterial,
+  restoreLearningMaterial
+} from '../api/learningMaterialService';
 
 const AdminContainer = styled.div`
   max-width: 1200px;
@@ -30,9 +39,13 @@ const MaterialItem = styled.div`
   border-radius: 8px;
 `;
 
-const MaterialTitle = styled.span`
+const MaterialTitle = styled(Link)`
   font-size: 1.2rem;
   color: #333;
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 const ButtonGroup = styled.div`
@@ -181,139 +194,179 @@ const TextArea = styled.textarea`
 
 export default function AdminLearningMaterials() {
   const [materials, setMaterials] = useState([]);
-  const [deletedMaterials, setDeletedMaterials] = useState([]);
   const [isAddingMaterial, setIsAddingMaterial] = useState(false);
   const [newMaterial, setNewMaterial] = useState({
-    id: null,
     title: '',
+    referenceInfo: '',
+    tips: '',
+    prettyManner: '',
+    keyword: '',
     photos: [],
-    content: {
-      reference: '',
-      keywords: '',
-      tips: '',
-      extraTips: '',
-    },
   });
 
-  useEffect(() => {
-    // 여기서 실제로는 API를 통해 학습 자료 데이터를 가져와야 합니다.
-    const dummyMaterials = Array.from({ length: 5 }, (_, i) => ({
-      id: i + 1,
-      title: `Learning Material ${i + 1}`,
-    }));
-    setMaterials(dummyMaterials);
-  }, []);
+  const navigate = useNavigate();
+  const { accessToken, role } = useUserStore();
 
-  const handleDeleteMaterial = (id) => {
-    const materialToDelete = materials.find(m => m.id === id);
-    setMaterials(materials.filter(m => m.id !== id));
-    setDeletedMaterials([...deletedMaterials, materialToDelete]);
+  useEffect(() => {
+    if (accessToken === null) {
+      alert("로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    if (role !== 'ADMIN') {
+      alert("접근 권한이 없습니다.");
+      navigate("/");
+      return;
+    }
+
+    setRccToken(accessToken);
+    fetchMaterials();
+  }, [accessToken, role, navigate]);
+
+  const fetchMaterials = async () => {
+    try {
+      const response = await getAllLearningMaterials();
+      if (response.data.isSuccess) {
+        setMaterials(response.data.result);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch learning materials");
+      }
+    } catch (error) {
+      console.error("Error fetching learning materials:", error);
+      alert("학습 자료를 불러오는데 실패했습니다.");
+    }
   };
 
-  const handleRestoreMaterial = (id) => {
-    const materialToRestore = deletedMaterials.find(m => m.id === id);
-    setDeletedMaterials(deletedMaterials.filter(m => m.id !== id));
-    setMaterials([...materials, materialToRestore]);
+  const handleDeleteMaterial = async (id) => {
+    try {
+      const response = await deleteLearningMaterial(id);
+      if (response.data.isSuccess) {
+        fetchMaterials();
+      } else {
+        throw new Error(response.data.message || "Failed to delete learning material");
+      }
+    } catch (error) {
+      console.error("Error deleting learning material:", error);
+      alert("학습 자료 삭제에 실패했습니다.");
+    }
+  };
+
+  const handleRestoreMaterial = async (id) => {
+    try {
+      const response = await restoreLearningMaterial(id);
+      if (response.data.isSuccess) {
+        fetchMaterials();
+      } else {
+        throw new Error(response.data.message || "Failed to restore learning material");
+      }
+    } catch (error) {
+      console.error("Error restoring learning material:", error);
+      alert("학습 자료 복구에 실패했습니다.");
+    }
   };
 
   const handleAddMaterial = () => {
     setIsAddingMaterial(true);
     setNewMaterial({
-      id: Date.now(),
       title: '',
+      referenceInfo: '',
+      tips: '',
+      prettyManner: '',
+      keyword: '',
       photos: [],
-      content: {
-        reference: '',
-        keywords: '',
-        tips: '',
-        extraTips: '',
-      },
     });
   };
 
-  const handleTitleChange = (e) => {
-    setNewMaterial({ ...newMaterial, title: e.target.value });
-  };
-
-  const handleContentChange = (contentType, newContent) => {
-    setNewMaterial({
-      ...newMaterial,
-      content: {
-        ...newMaterial.content,
-        [contentType]: newContent,
-      },
-    });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewMaterial({ ...newMaterial, [name]: value });
   };
 
   const handleAddPhoto = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setNewMaterial({
-        ...newMaterial,
+    const files = Array.from(e.target.files);
+    files.forEach(file => {
+      setNewMaterial(prev => ({
+        ...prev,
         photos: [
-          ...newMaterial.photos,
+          ...prev.photos,
           {
             id: Date.now(),
             url: URL.createObjectURL(file),
             file: file,
           },
         ],
-      });
-    }
-  };
-
-  const handleRemovePhoto = (photoId) => {
-    setNewMaterial({
-      ...newMaterial,
-      photos: newMaterial.photos.filter(photo => photo.id !== photoId),
+      }));
     });
   };
 
-  const handleSaveNewMaterial = () => {
-    setMaterials([...materials, newMaterial]);
-    setIsAddingMaterial(false);
+  const handleRemovePhoto = (photoId) => {
+    setNewMaterial(prev => ({
+      ...prev,
+      photos: prev.photos.filter(photo => photo.id !== photoId),
+    }));
+  };
+
+  const handleSaveNewMaterial = async () => {
+    if (!newMaterial.title || !newMaterial.referenceInfo || !newMaterial.tips || !newMaterial.prettyManner || !newMaterial.keyword) {
+      alert("모든 필드를 입력해주세요.");
+      return;
+    }
+
+    try {
+      const requestDto = {
+        title: newMaterial.title,
+        referenceInfo: newMaterial.referenceInfo,
+        tips: newMaterial.tips,
+        prettyManner: newMaterial.prettyManner,
+        keyword: newMaterial.keyword,
+      };
+
+      const imageFiles = newMaterial.photos.map(photo => photo.file);
+      console.log(imageFiles);
+
+      const response = await createLearningMaterial(requestDto, imageFiles);
+      
+      if (response.data.isSuccess) {
+        setIsAddingMaterial(false);
+        fetchMaterials();
+        alert("학습 자료가 성공적으로 생성되었습니다.");
+      } else {
+        throw new Error(response.data.message || "Failed to create learning material");
+      }
+    } catch (error) {
+      console.error("Error creating learning material:", error);
+      alert("학습 자료 생성에 실패했습니다.");
+    }
   };
 
   return (
     <AdminContainer>
       <Title>관리자 페이지: 학습 자료</Title>
       
-      {/* 삭제 섹션 */}
       <MaterialList>
         {materials.map((material) => (
           <MaterialItem key={material.id}>
-            <MaterialTitle>{material.title}</MaterialTitle>
+            <MaterialTitle to={`/learning/admin/${material.id}`}>
+              {material.title} (ID: {material.id})
+            </MaterialTitle>
             <ButtonGroup>
-              <DeleteButton onClick={() => handleDeleteMaterial(material.id)}>
-                <Trash2 size={16} style={{ marginRight: '0.5rem' }} />
-                Delete
-              </DeleteButton>
+              {material.isDeleted ? (
+                <RestoreButton onClick={() => handleRestoreMaterial(material.id)}>
+                  <RefreshCw size={16} style={{ marginRight: '0.5rem' }} />
+                  Restore
+                </RestoreButton>
+              ) : (
+                <DeleteButton onClick={() => handleDeleteMaterial(material.id)}>
+                  <Trash2 size={16} style={{ marginRight: '0.5rem' }} />
+                  Delete
+                </DeleteButton>
+              )}
             </ButtonGroup>
           </MaterialItem>
         ))}
       </MaterialList>
 
-      {/* 복구 섹션 */}
-      {deletedMaterials.length > 0 && (
-        <>
-          <Title>삭제된 학습 자료</Title>
-          <MaterialList>
-            {deletedMaterials.map((material) => (
-              <MaterialItem key={material.id}>
-                <MaterialTitle>{material.title}</MaterialTitle>
-                <ButtonGroup>
-                  <RestoreButton onClick={() => handleRestoreMaterial(material.id)}>
-                    <RefreshCw size={16} style={{ marginRight: '0.5rem' }} />
-                    Restore
-                  </RestoreButton>
-                </ButtonGroup>
-              </MaterialItem>
-            ))}
-          </MaterialList>
-        </>
-      )}
-
-      {/* 생성 섹션 */}
       <AddMaterialButton onClick={handleAddMaterial}>
         <Plus size={16} style={{ marginRight: '0.5rem' }} />
         Add New Material
@@ -321,8 +374,9 @@ export default function AdminLearningMaterials() {
       {isAddingMaterial && (
         <EditMaterialBox>
           <MaterialTitleInput
+            name="title"
             value={newMaterial.title}
-            onChange={handleTitleChange}
+            onChange={handleInputChange}
             placeholder="Enter material title"
           />
           <PhotoGrid>
@@ -337,38 +391,42 @@ export default function AdminLearningMaterials() {
             <AddPhotoButton>
               <Upload size={24} />
               <span>Add Photo</span>
-              <HiddenInput type="file" accept="image/*" onChange={handleAddPhoto} />
+              <HiddenInput type="file" accept="image/*" onChange={handleAddPhoto} multiple />
             </AddPhotoButton>
           </PhotoGrid>
           <ContentSection>
             <ContentTitle>이럴 때 참고하세요!</ContentTitle>
             <TextArea
-              value={newMaterial.content.reference}
-              onChange={(e) => handleContentChange('reference', e.target.value)}
+              name="referenceInfo"
+              value={newMaterial.referenceInfo}
+              onChange={handleInputChange}
               placeholder="이럴 때 참고하세요..."
             />
           </ContentSection>
           <ContentSection>
             <ContentTitle>핵심 키워드!</ContentTitle>
             <TextArea
-              value={newMaterial.content.keywords}
-              onChange={(e) => handleContentChange('keywords', e.target.value)}
+              name="keyword"
+              value={newMaterial.keyword}
+              onChange={handleInputChange}
               placeholder="핵심 키워드..."
             />
           </ContentSection>
           <ContentSection>
             <ContentTitle>사진 예쁘게 찍는 법</ContentTitle>
             <TextArea
-              value={newMaterial.content.tips}
-              onChange={(e) => handleContentChange('tips', e.target.value)}
+              name="prettyManner"
+              value={newMaterial.prettyManner}
+              onChange={handleInputChange}
               placeholder="사진 예쁘게 찍는 법..."
             />
           </ContentSection>
           <ContentSection>
             <ContentTitle>추가 꿀팁!</ContentTitle>
             <TextArea
-              value={newMaterial.content.extraTips}
-              onChange={(e) => handleContentChange('extraTips', e.target.value)}
+              name="tips"
+              value={newMaterial.tips}
+              onChange={handleInputChange}
               placeholder="추가 꿀팁..."
             />
           </ContentSection>

@@ -233,8 +233,8 @@ const ErrorMessage = styled.div`
 `;
 
 const EditProfile = () => {
-  const { accessToken, profileImageUrl, nickname: currentNickname, setProfileImageUrl } = useUserStore();
-  const [nickname, setNickname] = useState(currentNickname);
+  const { accessToken, profileImageUrl, nickname: currentNickname, setProfileImageUrl, setNickname } = useUserStore();
+  const [nickname, setNicknameState] = useState(currentNickname);
   const [profileImage, setProfileImage] = useState(null);
   const [isNicknameChecked, setIsNicknameChecked] = useState(true);
   const [isNicknameAvailable, setIsNicknameAvailable] = useState(true);
@@ -304,7 +304,7 @@ const EditProfile = () => {
 
   const handleNicknameChange = (e) => {
     const newNickname = e.target.value;
-    setNickname(newNickname);
+    setNicknameState(newNickname);
     if (newNickname !== currentNickname) {
       setIsNicknameChecked(false);
     } else {
@@ -330,7 +330,12 @@ const EditProfile = () => {
     setIsUpdating(true);
     try {
       if (nickname !== currentNickname && isNicknameChecked && isNicknameAvailable) {
-        await updateNickname({ nickname });
+        const response = await updateNickname({ nickname });
+        if (response.data.isSuccess) {
+          setNickname(nickname); // Update the global state with the new nickname
+        } else {
+          throw new Error(response.data.message || "닉네임 업데이트에 실패했습니다.");
+        }
       }
 
       if (isProfileImageChanged) {

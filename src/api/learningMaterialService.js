@@ -4,12 +4,18 @@ import { API, FORMAPI } from './axios';
 export const createLearningMaterial = (requestDto, imageFiles) => {
   const formData = new FormData();
   formData.append('learningMaterial', new Blob([JSON.stringify(requestDto)], { type: 'application/json' }));
-  if (imageFiles) {
+  
+  if (imageFiles && imageFiles.length > 0) {
     imageFiles.forEach((file, index) => {
-      formData.append(`images[${index}]`, file);
+      formData.append(`images`, file);
     });
   }
-  return FORMAPI.post('/api/learning-material', formData);
+  
+  return FORMAPI.post('/api/learning-material', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 };
 
 // 학습 자료 삭제 API (ADMIN 용)
@@ -23,3 +29,6 @@ export const getLearningMaterial = (id) => API.get(`/api/learning-material/${id}
 
 // 삭제되지 않은 학습 자료 목록 조회 API
 export const getLearningMaterials = () => API.get('/api/learning-material/list');
+
+// 모든 학습 자료 목록 조회 API
+export const getAllLearningMaterials = () => API.get('/api/learning-material/all');

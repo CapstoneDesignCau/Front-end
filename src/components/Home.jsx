@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Slider from 'react-slick';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Users, MessageCircle, Award } from 'lucide-react';
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
+import { getTopPosts } from '../api/postService'; 
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -167,8 +168,45 @@ const StatLabel = styled.div`
   color: #666;
 `;
 
+const LoadingMessage = styled.div`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #666;
+  margin: 2rem 0;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #ff0000;
+  margin: 2rem 0;
+`;
+
 export default function Home() {
   const navigate = useNavigate();
+  const [topPosts, setTopPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchTopPosts = async () => {
+      try {
+        const response = await getTopPosts();
+        if (response.data.isSuccess) {
+          setTopPosts(response.data.result.slice(0, 3)); // Limit to 3 posts
+        } else {
+          throw new Error(response.data.message || 'Failed to fetch top posts');
+        }
+      } catch (err) {
+        setError('Failed to load top posts. Please try again later.');
+        console.error('Error fetching top posts:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopPosts();
+  }, []);
 
   const settings = {
     dots: true,
@@ -221,17 +259,11 @@ export default function Home() {
     }
   ];
 
-  const communityHighlights = [
-    { title: "최고의 포즈 팁 공유", author: "포즈마스터", comments: 42, link: "/community/post/1" },
-    { title: "야외 촬영 노하우", author: "자연광러버", comments: 38, link: "/community/post/2" },
-    { title: "셀프 촬영 꿀팁 모음", author: "셀카여신", comments: 55, link: "/community/post/3" },
-  ];
-
   const stats = [
-    { icon: <Camera size={32} />, value: "10,000+", label: "피드백 받은 사진" },
-    { icon: <Users size={32} />, value: "5,000+", label: "활성 사용자" },
-    { icon: <MessageCircle size={32} />, value: "50,000+", label: "제공된 피드백" },
-    { icon: <Award size={32} />, value: "50+", label: "전문가 평가단" },
+    { icon: <Camera size={32} />, value: "300+", label: "피드백 받은 사진" },
+    { icon: <Users size={32} />, value: "50+", label: "활성 사용자" },
+    { icon: <MessageCircle size={32} />, value: "100+", label: "제공된 피드백" },
+    { icon: <Award size={32} />, value: "50+", label: "커뮤니티 게시글수" },
   ];
 
   return (
@@ -261,16 +293,22 @@ export default function Home() {
         </EvaluationCriteriaContainer>
 
         <SectionTitle>커뮤니티 인기 게시글</SectionTitle>
-        <CommunityHighlightsContainer>
-          {communityHighlights.map((highlight, index) => (
-            <HighlightItem key={index} onClick={() => navigate(highlight.link)}>
-              <HighlightTitle>{highlight.title}</HighlightTitle>
-              <HighlightMeta>
-                작성자: {highlight.author} | 댓글: {highlight.comments}
-              </HighlightMeta>
-            </HighlightItem>
-          ))}
-        </CommunityHighlightsContainer>
+        {loading ? (
+          <LoadingMessage>인기 게시글을 불러오는 중...</LoadingMessage>
+        ) : error ? (
+          <ErrorMessage>{error}</ErrorMessage>
+        ) : (
+          <CommunityHighlightsContainer>
+            {topPosts.map((post) => (
+              <HighlightItem key={post.id} onClick={() => navigate(`/community/${post.id}`)}>
+                <HighlightTitle>{post.title}</HighlightTitle>
+                <HighlightMeta>
+                  작성자: {post.writerNickname} | 좋아요: {post.likeCount} | 댓글: {post.commentCount}
+                </HighlightMeta>
+              </HighlightItem>
+            ))}
+          </CommunityHighlightsContainer>
+        )}
 
         <SectionTitle>서비스 통계</SectionTitle>
         <StatisticsContainer>
