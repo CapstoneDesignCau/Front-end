@@ -47,6 +47,7 @@ function App() {
         <Route path="/photo/my" element={<MyPhotos />} />
         <Route path="/admin/weekly-photo" element={<AdminUserEvaluation />} />
         <Route path="/admin/learning" element={<AdminLearningMaterial />} />
+        <Route path="/admin/learning/:learningId" element={<LearningMaterial />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </Router>

@@ -36,3 +36,7 @@ export const getUploadedImages = (page, size) =>
       size: size,
     },
   });
+
+// 로그인 한 유저의 최근 5개의 이미지 점수와 평균 점수 반환 API
+export const getUserImageEvaluationStats = () =>
+  API.get("/api/imageEvaluation/stats");

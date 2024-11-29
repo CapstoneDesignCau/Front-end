@@ -1,6 +1,15 @@
-import React, { useState } from "react";
-import styled from "styled-components";
-import { ThumbsUp, MessageSquare, Trash2, Paperclip, Send } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import styled from 'styled-components';
+import { ThumbsUp, MessageSquare, Paperclip, Send, ChevronLeft, ChevronRight } from 'lucide-react';
+import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+import useUserStore from '../store/userStorage';
+import { setRccToken } from '../api/axios';
+import { getPost, deletePost } from '../api/postService';
+import { likePost, likeComment } from '../api/likeService';
+import { createComment, deleteComment } from '../api/commentService';
 
 const PostContainer = styled.div`
   max-width: 800px;
@@ -29,6 +38,7 @@ const PostMeta = styled.div`
   gap: 1rem;
   font-size: 0.9rem;
   color: #666;
+  margin-bottom: 1rem;
 `;
 
 const ProfileImage = styled.img`
@@ -71,12 +81,31 @@ const FileItem = styled.li`
 const ImageContainer = styled.div`
   margin-top: 1rem;
   margin-bottom: 2rem;
+  width: 100%;
 `;
 
 const AttachedImage = styled.img`
-  max-width: 100%;
+  width: 100%;
   height: auto;
+  object-fit: contain;
   border-radius: 4px;
+  max-height: 400px;
+`;
+
+const SliderArrow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  color: white;
 `;
 
 const CommentSection = styled.div`
@@ -129,6 +158,12 @@ const Button = styled.button`
   &:hover {
     background-color: #c53030;
   }
+
+  &:disabled {
+    background-color: #e2e8f0;
+    color: #a0aec0;
+    cursor: not-allowed;
+  }
 `;
 
 const BlueButton = styled(Button)`
@@ -140,11 +175,18 @@ const BlueButton = styled(Button)`
 `;
 
 const LikeButton = styled(Button)`
-  background-color: ${(props) => (props.liked ? "#3182ce" : "#e2e8f0")};
-  color: ${(props) => (props.liked ? "white" : "#4a5568")};
+  background-color: ${(props) => (props.$liked ? "#3182ce" : "#e2e8f0")};
+  color: ${(props) => (props.$liked ? "white" : "#4a5568")};
 
   &:hover {
-    background-color: ${(props) => (props.liked ? "#2c5282" : "#cbd5e0")};
+    background-color: ${(props) => (props.$liked ? "#2c5282" : "#cbd5e0")};
+  }
+
+  &:disabled {
+    background-color: ${(props) => (props.$liked ? "#2c5282" : "#e2e8f0")};
+    color: ${(props) => (props.$liked ? "white" : "#a0aec0")};
+    opacity: 0.7;
+    cursor: not-allowed;
   }
 `;
 
@@ -161,6 +203,19 @@ const CommentInput = styled.input`
   border-radius: 4px;
 `;
 
+const LoadingMessage = styled.div`
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 2rem;
+`;
+
+const ErrorMessage = styled.div`
+  text-align: center;
+  font-size: 1.2rem;
+  color: #e53e3e;
+  margin-top: 2rem;
+`;
+
 const formatDate = (dateString) => {
   const date = new Date(dateString);
   const year = date.getFullYear();
@@ -171,129 +226,210 @@ const formatDate = (dateString) => {
   return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
-const isImageFile = (fileName) => {
+const isImageFile = (extension) => {
   const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
-  const extension = fileName.split(".").pop().toLowerCase();
-  return imageExtensions.includes(extension);
+  return imageExtensions.includes(extension.toLowerCase());
 };
 
 const CommunityPost = () => {
-  const [post, setPost] = useState({
-    id: 1,
-    title: "임시 게시글 제목",
-    content:
-      "이것은 임시 게시글의 내용입니다. 여기에 실제 게시글 내용이 들어갈 것입니다.",
-    writerProfileImageUrl: "/placeholder.svg?height=40&width=40",
-    writerNickname: "임시작성자",
-    createdAt: "2023-05-20T12:34:56",
-    likeCount: 15,
-    commentCount: 3,
-    files: [
-      { name: "첨부파일1.pdf", url: "https://example.com/file1.pdf" },
-      { name: "첨부이미지.jpg", url: "https://picsum.photos/800/600" },
-    ],
-    comments: [
-      {
-        id: 1,
-        writerNickname: "댓글작성자1",
-        userProfileUrl: "/placeholder.svg?height=40&width=40",
-        content: "첫 번째 댓글입니다.",
-        createdAt: "2023-05-20T13:00:00",
-        likeCount: 3,
-        isDeleted: false,
-      },
-      {
-        id: 2,
-        writerNickname: "댓글작성자2",
-        userProfileUrl: "/placeholder.svg?height=40&width=40",
-        content: "두 번째 댓글입니다.",
-        createdAt: "2023-05-20T14:30:00",
-        likeCount: 1,
-        isDeleted: false,
-      },
-      {
-        id: 3,
-        writerNickname: "댓글작성자3",
-        userProfileUrl: "/placeholder.svg?height=40&width=40",
-        content: "세번째 댓글입니다.",
-        createdAt: "2023-05-20T15:45:00",
-        likeCount: 0,
-        isDeleted: false,
-      },
-    ],
-  });
-
+  const [post, setPost] = useState(null);
   const [showComments, setShowComments] = useState(false);
   const [newComment, setNewComment] = useState("");
-  const [liked, setLiked] = useState(false);
-  const [isDeleted, setIsDeleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+  const { accessToken, nickname, profileImageUrl, role } = useUserStore();
+  const { postId } = useParams();
 
-  const handleLike = () => {
-    setLiked(!liked);
-    setPost((prevPost) => ({
-      ...prevPost,
-      likeCount: liked ? prevPost.likeCount - 1 : prevPost.likeCount + 1,
-    }));
-  };
-
-  const handleAddComment = (e) => {
-    e.preventDefault();
-    if (newComment.trim() === "") return;
-
-    const newCommentObj = {
-      id: post.comments.length + 1,
-      writerNickname: "현재 사용자",
-      userProfileUrl: "/placeholder.svg?height=40&width=40",
-      content: newComment,
-      createdAt: new Date().toISOString(),
-      likeCount: 0,
-      isDeleted: false,
-    };
-
-    setPost((prevPost) => ({
-      ...prevPost,
-      comments: [...prevPost.comments, newCommentObj],
-      commentCount: prevPost.commentCount + 1,
-    }));
-    setNewComment("");
-  };
-
-  const handleDeleteComment = (commentId) => {
-    setPost((prevPost) => ({
-      ...prevPost,
-      comments: prevPost.comments.map((comment) =>
-        comment.id === commentId ? { ...comment, isDeleted: true } : comment
-      ),
-      commentCount: prevPost.commentCount - 1,
-    }));
-  };
-
-  const handleDeletePost = () => {
-    if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
-      setIsDeleted(true);
+  const fetchPost = async () => {
+    try {
+      const response = await getPost(postId);
+      if (response.data.isSuccess) {
+        setPost(response.data.result);
+      } else {
+        throw new Error(response.data.message || "Failed to fetch post");
+      }
+    } catch (error) {
+      console.error("Error fetching post:", error);
+      setError("게시물을 불러오는데 실패했습니다. 다시 시도해 주세요.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleCommentLike = (commentId) => {
-    setPost((prevPost) => ({
-      ...prevPost,
-      comments: prevPost.comments.map((comment) =>
-        comment.id === commentId
-          ? { ...comment, likeCount: comment.likeCount + 1 }
-          : comment
-      ),
-    }));
+  useEffect(() => {
+    if (!postId) {
+      setError("게시물 ID가 제공되지 않았습니다.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (accessToken === null) {
+      alert("커뮤니티를 확인하려면 로그인이 필요합니다.");
+      navigate("/login");
+      return;
+    }
+
+    setRccToken(accessToken);
+    fetchPost();
+  }, [postId, accessToken, navigate]);
+
+  const handleLike = async () => {
+    if (post.isLikedByUser) return;
+
+    try {
+      const response = await likePost(postId);
+      if (response.data.isSuccess) {
+        setPost((prevPost) => ({
+          ...prevPost,
+          likeCount: prevPost.likeCount + 1,
+          isLikedByUser: true,
+        }));
+      } else {
+        throw new Error(response.data.message || "Failed to like post");
+      }
+    } catch (error) {
+      console.error("Error liking post:", error);
+      alert("게시물 좋아요에 실패했습니다. 다시 시도해 주세요.");
+    }
   };
 
-  if (isDeleted) {
-    return <PostContainer>이 게시글은 삭제되었습니다.</PostContainer>;
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (newComment.trim() === "") return;
+
+    const commentCreateRequestDto = {
+      postId: parseInt(postId),
+      content: newComment,
+    };
+
+    try {
+      const response = await createComment(commentCreateRequestDto);
+      if (response.data.isSuccess) {
+        const newCommentId = response.data.result;
+        const currentTime = new Date().toISOString();
+        
+        const newCommentObj = {
+          id: newCommentId,
+          content: newComment,
+          writerNickname: nickname,
+          isDeleted: false,
+          likeCount: 0,
+          createdAt: currentTime,
+          userProfileUrl: profileImageUrl || "/placeholder.svg?height=40&width=40",
+          isLikedByUser: false,
+        };
+
+        setPost((prevPost) => ({
+          ...prevPost,
+          comments: [...prevPost.comments, newCommentObj],
+          commentCount: prevPost.commentCount + 1,
+        }));
+        setNewComment("");
+
+        fetchPost();
+      } else {
+        throw new Error(response.data.message || "Failed to create comment");
+      }
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      alert("댓글 작성에 실패했습니다. 다시 시도해 주세요.");
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    try {
+      const response = await deleteComment(commentId);
+      if (response.data.isSuccess) {
+        setPost((prevPost) => ({
+          ...prevPost,
+          comments: prevPost.comments.filter((comment) => comment.id !== commentId),
+          commentCount: prevPost.commentCount - 1,
+        }));
+      } else {
+        throw new Error(response.data.message || "Failed to delete comment");
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      alert("댓글 삭제에 실패했습니다. 다시 시도해 주세요.");
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (window.confirm("정말로 이 게시글을 삭제하시겠습니까?")) {
+      try {
+        const response = await deletePost(postId);
+        if (response.data.isSuccess) {
+          alert("게시글이 성공적으로 삭제되었습니다.");
+          navigate("/community");
+        } else {
+          throw new Error(response.data.message || "Failed to delete post");
+        }
+      } catch (error) {
+        console.error("Error deleting post:", error);
+        alert("게시글 삭제에 실패했습니다. 다시 시도해 주세요.");
+      }
+    }
+  };
+
+  const handleCommentLike = async (commentId) => {
+    const comment = post.comments.find((c) => c.id === commentId);
+    if (comment.isLikedByUser) return;
+
+    try {
+      const response = await likeComment(commentId);
+      if (response.data.isSuccess) {
+        setPost((prevPost) => ({
+          ...prevPost,
+          comments: prevPost.comments.map((comment) =>
+            comment.id === commentId
+              ? {
+                  ...comment,
+                  likeCount: comment.likeCount + 1,
+                  isLikedByUser: true,
+                }
+              : comment
+          ),
+        }));
+      } else {
+        throw new Error(response.data.message || "Failed to like comment");
+      }
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      alert("댓글 좋아요에 실패했습니다. 다시 시도해 주세요.");
+    }
+  };
+
+  const canDeletePost = post && (role === 'ADMIN' || post.writerNickname === nickname);
+  const canDeleteComment = (comment) => role === 'ADMIN' || comment.writerNickname === nickname;
+
+  const sliderSettings = {
+    dots: true,
+    infinite: true,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    nextArrow: <SliderArrow><ChevronRight size={20} /></SliderArrow>,
+    prevArrow: <SliderArrow><ChevronLeft size={20} /></SliderArrow>,
+  };
+
+  if (isLoading) {
+    return <LoadingMessage>게시물을 불러오는 중...</LoadingMessage>;
+  }
+
+  if (error) {
+    return <ErrorMessage>{error}</ErrorMessage>;
+  }
+
+  if (!post) {
+    return <ErrorMessage>게시물을 찾을 수 없습니다.</ErrorMessage>;
   }
 
   return (
     <PostContainer>
       <PostHeader>
         <PostTitle>{post.title}</PostTitle>
-        <Button onClick={handleDeletePost}>게시글 삭제</Button>
+        {canDeletePost && <Button onClick={handleDeletePost}>게시글 삭제</Button>}
       </PostHeader>
       <PostMeta>
         <ProfileImage
@@ -303,9 +439,22 @@ const CommunityPost = () => {
         <span>{post.writerNickname}</span>
         <span>{formatDate(post.createdAt)}</span>
       </PostMeta>
+      {post.files && post.files.length > 0 && (
+        <ImageContainer>
+          <Slider {...sliderSettings}>
+            {post.files
+              .filter((file) => isImageFile(file.extension))
+              .map((file, index) => (
+                <div key={index}>
+                  <AttachedImage src={file.fileUrl} alt={file.fileName} />
+                </div>
+              ))}
+          </Slider>
+        </ImageContainer>
+      )}
       <PostContent>{post.content}</PostContent>
       <PostStats>
-        <LikeButton onClick={handleLike} liked={liked}>
+        <LikeButton onClick={handleLike} $liked={post.isLikedByUser} disabled={post.isLikedByUser}>
           <ThumbsUp size={18} />
           <span>{post.likeCount}</span>
         </LikeButton>
@@ -315,27 +464,18 @@ const CommunityPost = () => {
         </StatItem>
       </PostStats>
       {post.files && post.files.length > 0 && (
-        <>
-          <FileList>
-            {post.files
-              .filter((file) => !isImageFile(file.name))
-              .map((file, index) => (
-                <FileItem key={index}>
-                  <Paperclip size={18} />
-                  <a href={file.url} target="_blank" rel="noopener noreferrer">
-                    {file.name}
-                  </a>
-                </FileItem>
-              ))}
-          </FileList>
-          <ImageContainer>
-            {post.files
-              .filter((file) => isImageFile(file.name))
-              .map((file, index) => (
-                <AttachedImage key={index} src={file.url} alt={file.name} />
-              ))}
-          </ImageContainer>
-        </>
+        <FileList>
+          {post.files
+            .filter((file) => !isImageFile(file.extension))
+            .map((file, index) => (
+              <FileItem key={index}>
+                <Paperclip size={18} />
+                <a href={file.fileUrl} target="_blank" rel="noopener noreferrer">
+                  {file.fileName}
+                </a>
+              </FileItem>
+            ))}
+        </FileList>
       )}
       <CommentSection>
         <h2>댓글 ({post.commentCount})</h2>
@@ -345,7 +485,7 @@ const CommunityPost = () => {
         {showComments && (
           <>
             <CommentList>
-              {post.comments.map((comment) => (
+              {post.comments.filter(comment => !comment.isDeleted).map((comment) => (
                 <CommentItem key={comment.id}>
                   <CommentHeader>
                     <CommentAuthor>
@@ -358,17 +498,18 @@ const CommunityPost = () => {
                     <span>{formatDate(comment.createdAt)}</span>
                   </CommentHeader>
                   <CommentContent>
-                    {comment.isDeleted ? "삭제된 댓글입니다." : comment.content}
+                    {comment.content}
                   </CommentContent>
                   <CommentMeta>
-                    <LikeButton
-                      onClick={() => handleCommentLike(comment.id)}
-                      liked={false}
-                    >
-                      <ThumbsUp size={14} />
-                      <span>{comment.likeCount}</span>
-                    </LikeButton>
-                    {!comment.isDeleted && (
+                  <LikeButton
+                    onClick={() => handleCommentLike(comment.id)}
+                    $liked={comment.isLikedByUser}
+                    disabled={comment.isLikedByUser}
+                  >
+                    <ThumbsUp size={14} />
+                    <span>{comment.likeCount}</span>
+                  </LikeButton>
+                    {canDeleteComment(comment) && (
                       <Button onClick={() => handleDeleteComment(comment.id)}>
                         삭제
                       </Button>
