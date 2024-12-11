@@ -220,41 +220,65 @@ export default function Home() {
   };
 
   const slides = [
-    { image: '/slide1.jpg', caption: '전문가의 피드백으로 더 나은 포즈를 만들어보세요' },
-    { image: '/slide2.jpg', caption: '다양한 각도에서의 피드백으로 완벽한 사진을 찍어보세요' },
-    { image: '/slide3.jpg', caption: '인물 전신 사진의 구도와 포즈를 개선해보세요' },
-    { image: '/slide4.jpg', caption: '프로페셔널한 look을 위한 맞춤형 조언을 받아보세요' },
+    { image: '/slide1.jpg', caption: '피드백으로 더 나은 사진을 만들어보세요' },
+    { image: '/slide2.jpg', caption: '사진 속 인물과 배경의 조화로움을 찾아보세요' },
+    { image: '/slide3.jpg', caption: '사진의 밝기와 어두움을 적절히 조절해 보세요' },
+    { image: '/slide4.jpg', caption: '아웃포커싱을 통해 인물을 강조해 보세요' },
   ];
 
   const evaluationCriteria = [
     {
-      title: "포즈",
-      description: "자연스러운 자세와 표정, 신체의 균형과 라인을 평가합니다.",
-      image: "/placeholder.svg?height=200&width=300&text=Pose",
+      title: "등신 비율",
+      description: "사진 속 인물의 머리 크기 대비 전체 신체 비율을 평가합니다.",
+      image: "/ratio.jpg",
       learningMaterial: "/learning/pose"
     },
     {
-      title: "구도",
-      description: "사진의 전체적인 구성, 배경과의 조화, 주요 피사체의 위치를 평가합니다.",
-      image: "/placeholder.svg?height=200&width=300&text=Composition",
+      title: "세로 비율",
+      description: "사진 전체 중 인물의 세로 비율이 적절한지 평가합니다.",
+      image: "/height.png",
       learningMaterial: "/learning/composition"
     },
     {
-      title: "조명",
-      description: "빛의 방향, 강도, 색온도가 피사체를 어떻게 표현하는지 평가합니다.",
-      image: "/placeholder.svg?height=200&width=300&text=Lighting",
+      title: "피사체의 위치",
+      description: "주요 피사체가 사진 내에서 적절하게 위치해 있는지 평가합니다.",
+      image: "/position.jpg",
       learningMaterial: "/learning/lighting"
     },
     {
-      title: "의상 및 소품",
-      description: "의상의 적절성, 액세서리와 소품의 활용도를 평가합니다.",
-      image: "/placeholder.svg?height=200&width=300&text=Styling",
+      title: "인물의 배치",
+      description: "인물의 머리와 발끝이 이상적인 위치에 있는지 평가합니다.",
+      image: "/divisionline.png",
+      learningMaterial: "/learning/overall-impression"
+    },
+    {
+      title: "채도",
+      description: "색상의 선명도와 강도가 적절한지 평가합니다.",
+      image: "/saturation.png",
+      learningMaterial: "/learning/overall-impression"
+    },
+    {
+      title: "명도",
+      description: "사진의 밝기와 어두움의 분포가 적절한지 평가합니다.",
+      image: "/hsv.png",
       learningMaterial: "/learning/styling"
     },
     {
-      title: "전체적인 인상",
-      description: "사진이 전달하는 전반적인 분위기와 메시지를 평가합니다.",
-      image: "/placeholder.svg?height=200&width=300&text=Overall+Impression",
+      title: "노출",
+      description: "사진의 전반적인 밝기가 적절한지 평가합니다.",
+      image: "/exposure.png",
+      learningMaterial: "/learning/overall-impression"
+    },
+    {
+      title: "아웃포커싱",
+      description: "배경과 주요 피사체 간의 초점 차이가 적절한지 평가합니다.",
+      image: "/outfocusing.png",
+      learningMaterial: "/learning/overall-impression"
+    },
+    {
+      title: "",
+      description: "추후 추가될 예정입니다.",
+      image: "/comingsoon.png",
       learningMaterial: "/learning/overall-impression"
     }
   ];

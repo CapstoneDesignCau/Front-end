@@ -140,31 +140,31 @@ function Navigation() {
         to="/weekly-photo"
         className={location.pathname === "/weekly-photo" ? "active" : ""}
       >
-        이주의 사진
+        Weekly Photo
       </StyledLink>
       <StyledLink
         to="/photo/feedback"
         className={location.pathname === "/photo/feedback" ? "active" : ""}
       >
-        사진 피드백
+        Feedback
       </StyledLink>
       <StyledLink
         to="/photo/upload"
         className={location.pathname === "/photo/upload" ? "active" : ""}
       >
-        사진 업로드
+        Upload
       </StyledLink>
       <StyledLink
         to="/learning"
         className={location.pathname === "/learning" ? "active" : ""}
       >
-        학습자료
+        Learning
       </StyledLink>
       <StyledLink
         to="/community"
         className={location.pathname === "/community" ? "active" : ""}
       >
-        커뮤니티
+        Community
       </StyledLink>
     </>
   );
@@ -192,14 +192,14 @@ function Navigation() {
                 alt="User Profile"
               />
             </StyledLink>
-            <StyledButton onClick={handleLogout}>로그아웃</StyledButton>
+            <StyledButton onClick={handleLogout}>Logout</StyledButton>
           </>
         ) : (
           <StyledLink
             to="/login"
             className={location.pathname === "/login" ? "active" : ""}
           >
-            로그인
+            Login
           </StyledLink>
         )}
       </NavLinks>
@@ -230,16 +230,16 @@ function Navigation() {
                   src={profileImageUrl || "/default_1.jpg"}
                   alt="User Profile"
                 />
-                프로필
+                Profile
               </StyledLink>
-              <StyledButton onClick={handleLogout}>로그아웃</StyledButton>
+              <StyledButton onClick={handleLogout}>Logout</StyledButton>
             </>
           ) : (
             <StyledLink
               to="/login"
               className={location.pathname === "/login" ? "active" : ""}
             >
-              로그인
+              Login
             </StyledLink>
           )}
         </MobileNavLinks>

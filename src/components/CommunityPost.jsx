@@ -101,11 +101,31 @@ const SliderArrow = styled.div`
   transform: translateY(-50%);
   z-index: 1;
   cursor: pointer;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7); /* 더 진한 배경색 */
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 40px; /* 크기 증가 */
+  height: 40px; /* 크기 증가 */
   color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* 그림자 추가 */
+  transition: background-color 0.3s, transform 0.3s; /* 부드러운 전환 효과 */
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.9); /* 호버 시 더 진한 배경색 */
+    transform: translateY(-50%) scale(1.1); /* 호버 시 크기 증가 */
+  }
+
+  &.slick-prev {
+    left: 10px;
+  }
+
+  &.slick-next {
+    right: 10px;
+  }
+
+  svg {
+    width: 20px; /* 아이콘 크기 조정 */
+    height: 20px; /* 아이콘 크기 조정 */
+  }
 `;
 
 const CommentSection = styled.div`

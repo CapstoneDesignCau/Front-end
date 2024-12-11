@@ -69,6 +69,7 @@ const Modal = styled.div`
 `;
 
 const ModalContent = styled.div`
+  position: relative;
   background-color: white;
   padding: 2rem;
   border-radius: 8px;
@@ -82,10 +83,21 @@ const CloseButton = styled.button`
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: none;
+  background: #000000;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
+  color: #ffffff;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    color: #61dafb;
+  }
 `;
 
 const DetailImage = styled.img`
