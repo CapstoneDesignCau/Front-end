@@ -124,6 +124,15 @@ const FeedbackItem = styled.li`
   border-radius: 4px;
 `;
 
+const FeedbackContent = styled.p`
+  white-space: pre-line; /* 줄바꿈을 적용하기 위해 추가 */
+`;
+
+const FeedbackTitle = styled.span`
+  font-weight: bold;
+  color: #333;
+`;
+
 const LearningMaterialLink = styled.button`
   display: inline-flex;
   align-items: center;
@@ -265,10 +274,12 @@ export default function PhotoEvaluationList() {
             <FeedbackList>
               {selectedEvaluation.feedbacks.map((feedback) => (
                 <FeedbackItem key={feedback.feedbackId}>
-                  <p>{feedback.content}</p>
-                  <LearningMaterialLink onClick={() => handleLearningMaterialClick(feedback.materialId)}>
-                    관련 학습자료 확인하러가기 <ChevronRight size={16} />
-                  </LearningMaterialLink>
+                  <FeedbackContent><FeedbackTitle>{feedback.title}</FeedbackTitle># {feedback.content}</FeedbackContent>
+                  {feedback.materialId && (
+                    <LearningMaterialLink onClick={() => handleLearningMaterialClick(feedback.materialId)}>
+                      관련 학습자료 확인하러 가기 <ChevronRight size={16} />
+                    </LearningMaterialLink>
+                  )}
                 </FeedbackItem>
               ))}
             </FeedbackList>

@@ -347,7 +347,7 @@ export default function AdminLearningMaterials() {
       <MaterialList>
         {materials.map((material) => (
           <MaterialItem key={material.id}>
-            <MaterialTitle to={`/learning/admin/${material.id}`}>
+            <MaterialTitle to={`/learning/${material.id}`}>
               {material.title} (ID: {material.id})
             </MaterialTitle>
             <ButtonGroup>

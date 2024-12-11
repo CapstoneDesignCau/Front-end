@@ -130,6 +130,7 @@ const Title = styled.h2`
 const Content = styled.p`
   color: #495057;
   line-height: 1.6;
+  white-space: pre-line;
 `;
 
 const NavButtons = styled.div`
@@ -252,11 +253,11 @@ export default function Component() {
 
   const settings = {
     dots: true,
-    infinite: true,
+    infinite: learningMaterial?.images.length > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
-    autoplay: true,
+    autoplay: learningMaterial?.images.length > 1,
     autoplaySpeed: 5000,
     pauseOnHover: true,
   };

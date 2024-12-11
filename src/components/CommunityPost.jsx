@@ -51,6 +51,7 @@ const ProfileImage = styled.img`
 const PostContent = styled.div`
   margin-bottom: 2rem;
   line-height: 1.6;
+  white-space: pre-wrap;
 `;
 
 const PostStats = styled.div`
@@ -247,7 +248,7 @@ const formatDate = (dateString) => {
 };
 
 const isImageFile = (extension) => {
-  const imageExtensions = ["jpg", "jpeg", "png", "gif", "bmp", "webp"];
+  const imageExtensions = ["jpg", "jpeg","jfif", "png", "gif", "bmp"];
   return imageExtensions.includes(extension.toLowerCase());
 };
 
@@ -425,10 +426,13 @@ const CommunityPost = () => {
 
   const sliderSettings = {
     dots: true,
-    infinite: true,
+    infinite: post?.files?.filter(file => isImageFile(file.extension)).length > 1,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
+    autoplay: post?.files?.filter(file => isImageFile(file.extension)).length > 1,
+    autoplaySpeed: 5000,
+    pauseOnHover: true,
     nextArrow: <SliderArrow><ChevronRight size={20} /></SliderArrow>,
     prevArrow: <SliderArrow><ChevronLeft size={20} /></SliderArrow>,
   };
@@ -461,15 +465,17 @@ const CommunityPost = () => {
       </PostMeta>
       {post.files && post.files.length > 0 && (
         <ImageContainer>
-          <Slider {...sliderSettings}>
-            {post.files
-              .filter((file) => isImageFile(file.extension))
-              .map((file, index) => (
-                <div key={index}>
-                  <AttachedImage src={file.fileUrl} alt={file.fileName} />
-                </div>
-              ))}
-          </Slider>
+          {post.files.filter(file => isImageFile(file.extension)).length > 0 && (
+            <Slider {...sliderSettings}>
+              {post.files
+                .filter((file) => isImageFile(file.extension))
+                .map((file, index) => (
+                  <div key={index}>
+                    <AttachedImage src={file.fileUrl} alt={file.fileName} />
+                  </div>
+                ))}
+            </Slider>
+          )}
         </ImageContainer>
       )}
       <PostContent>{post.content}</PostContent>
