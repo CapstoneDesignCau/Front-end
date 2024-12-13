@@ -228,58 +228,58 @@ export default function Home() {
 
   const evaluationCriteria = [
     {
-      title: "등신 비율",
+      title: "등신",
       description: "사진 속 인물의 머리 크기 대비 전체 신체 비율을 평가합니다.",
       image: "/ratio.jpg",
-      learningMaterial: "/learning/pose"
+      //learningMaterial: "/learning/pose"
     },
     {
-      title: "세로 비율",
+      title: "비율",
       description: "사진 전체 중 인물의 세로 비율이 적절한지 평가합니다.",
       image: "/height.png",
-      learningMaterial: "/learning/composition"
+      //learningMaterial: "/learning/composition"
     },
     {
-      title: "피사체의 위치",
-      description: "주요 피사체가 사진 내에서 적절하게 위치해 있는지 평가합니다.",
+      title: "구도",
+      description: "인물이 사진 내에서 적절하게 위치해 있는지 평가합니다.",
       image: "/position.jpg",
-      learningMaterial: "/learning/lighting"
+      //learningMaterial: "/learning/lighting"
     },
     {
-      title: "인물의 배치",
+      title: "수직 위치",
       description: "인물의 머리와 발끝이 이상적인 위치에 있는지 평가합니다.",
       image: "/divisionline.png",
-      learningMaterial: "/learning/overall-impression"
-    },
-    {
-      title: "채도",
-      description: "색상의 선명도와 강도가 적절한지 평가합니다.",
-      image: "/saturation.png",
-      learningMaterial: "/learning/overall-impression"
-    },
-    {
-      title: "명도",
-      description: "사진의 밝기와 어두움의 분포가 적절한지 평가합니다.",
-      image: "/hsv.png",
-      learningMaterial: "/learning/styling"
-    },
-    {
-      title: "노출",
-      description: "사진의 전반적인 밝기가 적절한지 평가합니다.",
-      image: "/exposure.png",
-      learningMaterial: "/learning/overall-impression"
+      //learningMaterial: "/learning/overall-impression"
     },
     {
       title: "아웃포커싱",
       description: "배경과 주요 피사체 간의 초점 차이가 적절한지 평가합니다.",
       image: "/outfocusing.png",
-      learningMaterial: "/learning/overall-impression"
+      //learningMaterial: "/learning/overall-impression"
+    },
+    {
+      title: "노출",
+      description: "사진의 전반적인 밝기가 적절한지 평가합니다.",
+      image: "/exposure.png",
+      //learningMaterial: "/learning/overall-impression"
+    },
+    {
+      title: "명도",
+      description: "사진의 밝기와 어두움의 분포가 적절한지 평가합니다.",
+      image: "/hsv.png",
+      //learningMaterial: "/learning/styling"
+    },
+    {
+      title: "채도",
+      description: "색상의 선명도와 강도가 적절한지 평가합니다.",
+      image: "/saturation.png",
+      //learningMaterial: "/learning/overall-impression"
     },
     {
       title: "",
       description: "추후 추가될 예정입니다.",
       image: "/comingsoon.png",
-      learningMaterial: "/learning/overall-impression"
+      //learningMaterial: "/learning/overall-impression"
     }
   ];
 
